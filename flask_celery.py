@@ -221,10 +221,10 @@ class _LockManager(object):
 def _select_lock_backend(task_lock_backend):
     if 'redis' in task_lock_backend:
         lock_manager = _LockBackendRedis
-    elif task_lock_backend.startswith('db') or task_lock_backend.startswith('database'):
+    elif task_lock_backend.startswith('db') or task_lock_backend.startswith('database') or task_lock_backend.startswith('sql'):
         lock_manager = _LockBackendDb
     else:
-        raise NotImplementedError
+        raise NotImplementedError('No backend found for {}'.format(task_lock_backend))
     return lock_manager
 
 

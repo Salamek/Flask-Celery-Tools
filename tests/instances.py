@@ -21,6 +21,7 @@ def generate_config():
 
     if os.environ.get('BROKER') == 'rabbit':
         config['CELERY_BROKER_URL'] = 'amqp://user:pass@localhost//'
+        config['CELERY_TASK_LOCK_BACKEND'] = 'redis://localhost/1'
     elif os.environ.get('BROKER') == 'redis':
         config['REDIS_URL'] = 'redis://localhost/1'
         config['CELERY_BROKER_URL'] = config['REDIS_URL']
@@ -48,6 +49,9 @@ def generate_config():
 
     if 'CELERY_BROKER_URL' in config and 'CELERY_RESULT_BACKEND' not in config:
         config['CELERY_RESULT_BACKEND'] = config['CELERY_BROKER_URL']
+
+    if 'CELERY_BROKER_URL' in config and 'CELERY_TASK_LOCK_BACKEND' not in config:
+        config['CELERY_TASK_LOCK_BACKEND'] = config['CELERY_BROKER_URL']
 
     return config
 

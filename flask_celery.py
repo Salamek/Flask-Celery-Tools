@@ -5,6 +5,14 @@ https://pypi.python.org/pypi/Flask-Celery-Helper
 """
 
 import hashlib
+import redis
+from sqlalchemy import create_engine
+import sqlalchemy as sa
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.pool import NullPool
+from sqlalchemy.ext.declarative import declarative_base
+from contextlib import contextmanager
 from datetime import datetime, timedelta
 from functools import partial, wraps
 from logging import getLogger
@@ -22,10 +30,143 @@ class OtherInstanceError(Exception):
     pass
 
 
+class _LockBackend(object):
+
+    def acquire(self, task_identifier, timeout):
+        raise NotImplementedError
+
+    def release(self, task_identifier):
+        raise NotImplementedError
+
+    def exists(self, task_identifier):
+        raise NotImplementedError
+
+
+class _LockBackendRedis(_LockBackend):
+    CELERY_LOCK = '_celery.single_instance.{task_id}'
+
+    def __init__(self, task_lock_backend_uri):
+        self.redis_client = redis.StrictRedis.from_url(task_lock_backend_uri)
+
+    def acquire(self, task_identifier, timeout):
+        redis_key = self.CELERY_LOCK.format(task_id=task_identifier)
+        lock = self.redis_client.lock(redis_key, timeout=timeout)
+        return lock.acquire(blocking=False)
+
+    def release(self, task_identifier):
+        redis_key = self.CELERY_LOCK.format(task_id=task_identifier)
+        self.redis_client.delete(redis_key)
+
+    def exists(self, task_identifier):
+        redis_key = self.CELERY_LOCK.format(task_id=task_identifier)
+        return self.redis_client.exists(redis_key)
+
+
+LockModelBase = declarative_base()
+
+
+class Lock(LockModelBase):
+
+    __tablename__ = 'celeryd_lock'
+    __table_args__ = {'sqlite_autoincrement': True}
+
+    id = sa.Column(sa.Integer, sa.Sequence('lock_id_sequence'),
+                   primary_key=True, autoincrement=True)
+    task_identifier = sa.Column(sa.String(155), unique=True)
+    created = sa.Column(sa.DateTime, default=datetime.utcnow,
+                          onupdate=datetime.utcnow, nullable=True)
+
+    def __init__(self, task_id):
+        self.task_id = task_id
+
+    def to_dict(self):
+        return {
+            'task_id': self.task_id,
+            'date_done': self.date_done,
+        }
+
+
+class SessionManager(object):
+    """Manage SQLAlchemy sessions."""
+
+    def __init__(self):
+        self.prepared = False
+
+    def get_engine(self, dburi):
+        return create_engine(dburi, poolclass=NullPool)
+
+    def create_session(self, dburi):
+        engine = self.get_engine(dburi)
+        return engine, sessionmaker(bind=engine)
+
+    def prepare_models(self, engine):
+        if not self.prepared:
+            LockModelBase.metadata.create_all(engine)
+            self.prepared = True
+
+    def session_factory(self, dburi):
+        engine, session = self.create_session(dburi)
+        self.prepare_models(engine)
+        return session()
+
+
+class _LockBackendDb(_LockBackend):
+    def __init__(self, task_lock_backend_uri):
+        self.task_lock_backend_uri = task_lock_backend_uri
+
+    def result_session(self, session_manager=SessionManager()):
+        return session_manager.session_factory(self.task_lock_backend_uri)
+
+    @contextmanager
+    def session_cleanup(self, session):
+        try:
+            yield
+        except Exception:
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
+    def acquire(self, task_identifier, timeout):
+        session = self.result_session()
+        with self.session_cleanup(session):
+            try:
+                lock = Lock(task_identifier)
+                session.add(lock)
+                session.commit()
+                return True
+            except IntegrityError:
+                session.rollback()
+
+                # task_id exists, lets check expiration date
+                lock = session.query(Lock).filter(Lock.task_identifier == task_identifier).one()
+                difference = datetime.utcnow() - lock.created
+                if difference < timedelta(seconds=timeout):
+                    return False
+                lock.created = datetime.utcnow()
+                session.add(lock)
+                session.commit()
+                return True
+            except:
+                session.rollback()
+                raise
+
+    def release(self, task_identifier):
+        session = self.result_session()
+        with self.session_cleanup(session):
+            session.query(Lock).filter(Lock.task_identifier == task_identifier).delete()
+            session.commit()
+
+    def exists(self, task_identifier):
+        session = self.result_session()
+        with self.session_cleanup(session):
+            return session.query(Lock).filter(Lock.task_identifier == task_identifier).count() > 1
+
+
 class _LockManager(object):
     """Base class for other lock managers."""
 
-    def __init__(self, celery_self, timeout, include_args, args, kwargs):
+    def __init__(self, lock_backend, celery_self, timeout, include_args, args, kwargs):
         """May raise NotImplementedError if the Celery backend is not supported.
 
         :param celery_self: From wrapped() within single_instance(). It is the `self` object specified in a binded
@@ -35,6 +176,7 @@ class _LockManager(object):
         :param iter args: The task instance's args.
         :param dict kwargs: The task instance's kwargs.
         """
+        self.lock_backend = lock_backend
         self.celery_self = celery_self
         self.timeout = timeout
         self.include_args = include_args
@@ -51,21 +193,9 @@ class _LockManager(object):
             task_id += '.args.{0}'.format(hashlib.md5(merged_args.encode('utf-8')).hexdigest())
         return task_id
 
-
-class _LockManagerRedis(_LockManager):
-    """Handle locking/unlocking for Redis backends."""
-
-    CELERY_LOCK = '_celery.single_instance.{task_id}'
-
-    def __init__(self, celery_self, timeout, include_args, args, kwargs):
-        super(_LockManagerRedis, self).__init__(celery_self, timeout, include_args, args, kwargs)
-        self.lock = None
-
     def __enter__(self):
-        redis_key = self.CELERY_LOCK.format(task_id=self.task_identifier)
-        self.lock = self.celery_self.backend.client.lock(redis_key, timeout=self.timeout)
-        self.log.debug('Timeout %ds | Redis key %s', self.timeout, redis_key)
-        if not self.lock.acquire(blocking=False):
+        self.log.debug('Timeout %ds | Key %s', self.timeout, self.task_identifier)
+        if not self.lock_backend.acquire(self.task_identifier, self.timeout):
             self.log.debug('Another instance is running.')
             raise OtherInstanceError('Failed to acquire lock, {0} already running.'.format(self.task_identifier))
         else:
@@ -76,80 +206,23 @@ class _LockManagerRedis(_LockManager):
             # Failed to get lock last time, not releasing.
             return
         self.log.debug('Releasing lock.')
-        self.lock.release()
+        self.lock_backend.release(self.task_identifier)
 
     @property
     def is_already_running(self):
         """Return True if lock exists and has not timed out."""
-        redis_key = self.CELERY_LOCK.format(task_id=self.task_identifier)
-        return self.celery_self.backend.client.exists(redis_key)
+        return self.lock_backend.exists(self.task_identifier)
 
     def reset_lock(self):
         """Removed the lock regardless of timeout."""
-        redis_key = self.CELERY_LOCK.format(task_id=self.task_identifier)
-        self.celery_self.backend.client.delete(redis_key)
+        self.lock_backend.release(self.task_identifier)
 
 
-class _LockManagerDB(_LockManager):
-    """Handle locking/unlocking for SQLite/MySQL/PostgreSQL/etc backends."""
-
-    def __init__(self, celery_self, timeout, include_args, args, kwargs):
-        super(_LockManagerDB, self).__init__(celery_self, timeout, include_args, args, kwargs)
-        self.save_group = getattr(self.celery_self.backend, '_save_group')
-        self.restore_group = getattr(self.celery_self.backend, '_restore_group')
-        self.delete_group = getattr(self.celery_self.backend, '_delete_group')
-
-    def __enter__(self):
-        self.log.debug('Timeout %ds', self.timeout)
-        try:
-            self.save_group(self.task_identifier, None)
-        except Exception as exc:  # pylint: disable=broad-except
-            if 'IntegrityError' not in str(exc) and 'ProgrammingError' not in str(exc):
-                raise
-            difference = datetime.utcnow() - self.restore_group(self.task_identifier)['date_done']
-            if difference < timedelta(seconds=self.timeout):
-                self.log.debug('Another instance is running.')
-                raise OtherInstanceError('Failed to acquire lock, {0} already running.'.format(self.task_identifier))
-            self.log.debug('Timeout expired, stale lock found, releasing lock.')
-            self.delete_group(self.task_identifier)
-            self.save_group(self.task_identifier, None)
-            self.log.debug('Got lock, running.')
-
-    def __exit__(self, exc_type, *_):
-        if exc_type == OtherInstanceError:
-            # Failed to get lock last time, not releasing.
-            return
-        self.log.debug('Releasing lock.')
-        self.delete_group(self.task_identifier)
-
-    @property
-    def is_already_running(self):
-        """Return True if lock exists and has not timed out."""
-        date_done = (self.restore_group(self.task_identifier) or dict()).get('date_done')
-        if not date_done:
-            return False
-        difference = datetime.utcnow() - date_done
-        return difference < timedelta(seconds=self.timeout)
-
-    def reset_lock(self):
-        """Removed the lock regardless of timeout."""
-        self.delete_group(self.task_identifier)
-
-
-def _select_manager(backend_name):
-    """Select the proper LockManager based on the current backend used by Celery.
-
-    :raise NotImplementedError: If Celery is using an unsupported backend.
-
-    :param str backend_name: Class name of the current Celery backend. Usually value of
-        current_app.extensions['celery'].celery.backend.__class__.__name__.
-
-    :return: Class definition object (not instance). One of the _LockManager* classes.
-    """
-    if backend_name == 'RedisBackend':
-        lock_manager = _LockManagerRedis
-    elif backend_name == 'DatabaseBackend':
-        lock_manager = _LockManagerDB
+def _select_lock_backend(task_lock_backend):
+    if 'redis' in task_lock_backend:
+        lock_manager = _LockBackendRedis
+    elif task_lock_backend.startswith('db') or task_lock_backend.startswith('database'):
+        lock_manager = _LockBackendDb
     else:
         raise NotImplementedError
     return lock_manager
@@ -189,6 +262,7 @@ class Celery(CeleryClass):
         :param app: Flask application instance.
         """
         self.original_register_app = _state._register_app  # Backup Celery app registration function.
+        self.lock_backend = None
         _state._register_app = lambda _: None  # Upon Celery app registration attempt, do nothing.
         super(Celery, self).__init__()
         if app is not None:
@@ -208,6 +282,10 @@ class Celery(CeleryClass):
 
         # Instantiate celery and read config.
         super(Celery, self).__init__(app.import_name, broker=app.config['CELERY_BROKER_URL'])
+
+        # Instantiate lock backend
+        lock_backend_class = _select_lock_backend(app.config.get('CELERY_TASK_LOCK_BACKEND'))
+        self.lock_backend = lock_backend_class(app.config.get('CELERY_TASK_LOCK_BACKEND'))
 
         # Set result backend default.
         if 'CELERY_RESULT_BACKEND' in app.config:
@@ -259,8 +337,15 @@ def single_instance(func=None, lock_timeout=None, include_args=False):
             or celery_self.app.conf.get('CELERYD_TASK_TIME_LIMIT')
             or (60 * 5)
         )
-        manager_class = _select_manager(celery_self.backend.__class__.__name__)
-        lock_manager = manager_class(celery_self, timeout, include_args, args, kwargs)
+
+        lock_manager = _LockManager(
+            celery_self.app.lock_backend,
+            celery_self,
+            timeout,
+            include_args,
+            args,
+            kwargs
+        )
 
         # Lock and execute.
         with lock_manager:

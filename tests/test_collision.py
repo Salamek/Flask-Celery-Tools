@@ -2,8 +2,8 @@
 
 import pytest
 
-from flask_celery import _select_manager, OtherInstanceError
-from tests.instances import celery
+from flask_celery import _LockManager, OtherInstanceError
+from tests.instances import celery, app
 
 PARAMS = [('tests.instances.add', 8), ('tests.instances.mul', 16), ('tests.instances.sub', 0)]
 
@@ -18,7 +18,6 @@ def test_basic(task_name, expected):
 @pytest.mark.parametrize('task_name,expected', PARAMS)
 def test_collision(task_name, expected):
     """Test single-instance collision."""
-    manager_class = _select_manager(celery.backend.__class__.__name__)
     manager_instance = list()
     task = celery.tasks[task_name]
 
@@ -26,10 +25,10 @@ def test_collision(task_name, expected):
     def new_exit(self, *_):
         manager_instance.append(self)
         return None
-    original_exit = manager_class.__exit__
-    setattr(manager_class, '__exit__', new_exit)
+    original_exit = _LockManager.__exit__
+    setattr(_LockManager, '__exit__', new_exit)
     assert expected == task.apply_async(args=(4, 4)).get()
-    setattr(manager_class, '__exit__', original_exit)
+    setattr(_LockManager, '__exit__', original_exit)
     assert manager_instance[0].is_already_running is True
 
     # Now run it again.
@@ -51,7 +50,6 @@ def test_collision(task_name, expected):
 
 def test_include_args():
     """Test single-instance collision with task arguments taken into account."""
-    manager_class = _select_manager(celery.backend.__class__.__name__)
     manager_instance = list()
     task = celery.tasks['tests.instances.mul']
 
@@ -60,11 +58,11 @@ def test_include_args():
         """Expected to be run twice."""
         manager_instance.append(self)
         return None
-    original_exit = manager_class.__exit__
-    setattr(manager_class, '__exit__', new_exit)
+    original_exit = _LockManager.__exit__
+    setattr(_LockManager, '__exit__', new_exit)
     assert 16 == task.apply_async(args=(4, 4)).get()
     assert 20 == task.apply_async(args=(5, 4)).get()
-    setattr(manager_class, '__exit__', original_exit)
+    setattr(_LockManager, '__exit__', original_exit)
     assert manager_instance[0].is_already_running is True
     assert manager_instance[1].is_already_running is True
 

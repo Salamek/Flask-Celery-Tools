@@ -9,7 +9,11 @@ from tests.instances import app
 class FakeApp(object):
     """Mock Flask application."""
 
-    config = dict(CELERY_BROKER_URL='redis://localhost', CELERY_RESULT_BACKEND='redis://localhost')
+    config = dict(
+        CELERY_BROKER_URL='redis://localhost',
+        CELERY_RESULT_BACKEND='redis://localhost',
+        CELERY_TASK_LOCK_BACKEND='redis://localhost'
+    )
     static_url_path = ''
     import_name = ''
 

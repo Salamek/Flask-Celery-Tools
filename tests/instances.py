@@ -20,7 +20,7 @@ def generate_config():
     config = dict()
 
     if os.environ.get('BROKER') == 'rabbit':
-        config['CELERY_BROKER_URL'] = 'amqp://user:pass@localhost//'
+        config['CELERY_BROKER_URL'] = 'amqp://guest:guest@localhost:5672//'
         config['CELERY_TASK_LOCK_BACKEND'] = 'redis://localhost/1'
     elif os.environ.get('BROKER') == 'redis':
         config['REDIS_URL'] = 'redis://localhost/1'

@@ -6,13 +6,16 @@ python:
   - pypy
   - 2.7
   - 2.6
-services: [redis-server]
+services:
+  - redis-server
+  - rabbitmq
 sudo: false
 
 # Environment and matrix.
 env:
   - BROKER: sqlite
   - BROKER: mysql
+  - BROKER: rabbit
   - BROKER: postgres
   - BROKER: redis
   - BROKER: redis_sock,/tmp/redis.sock

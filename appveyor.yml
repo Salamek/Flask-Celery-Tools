@@ -2,6 +2,7 @@
 services:
   - mysql
   - postgresql
+  - rabbitmq
 
 # Environment and matrix.
 environment:

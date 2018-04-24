@@ -1,16 +1,13 @@
+"""Flask Celery Helper."""
+
 import os
-from celery import _state, Celery as CeleryClass
 from functools import partial, wraps
-from flask_celery.lock_manager import select_lock_backend, LockManager
+from celery import _state, Celery as CeleryClass
+from flask_celery.lock_manager import LockManager, select_lock_backend
 
 __author__ = '@Robpol86'
 __license__ = 'MIT'
 __version__ = '1.1.0'
-
-try:
-    from urllib.parse import urlparse
-except ImportError:
-    from urlparse import urlparse
 
 
 class _CeleryState(object):
@@ -119,7 +116,7 @@ def single_instance(func=None, lock_timeout=None, include_args=False):
         return partial(single_instance, lock_timeout=lock_timeout, include_args=include_args)
 
     @wraps(func)
-    def wrapped(celery_self, *args, **kwargs):
+    def wrapped(celery_self, *args, **kwargs):  # noqa: D401
         """Wrapped Celery task, for single_instance()."""
         # Select the manager and get timeout.
         timeout = (

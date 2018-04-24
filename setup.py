@@ -41,12 +41,12 @@ class CheckVersion(Command):
     user_options = []
 
     @classmethod
-    def initialize_options(cls):
+    def initialize_options(cls):  # noqa: D401
         """Required by distutils."""
         pass
 
     @classmethod
-    def finalize_options(cls):
+    def finalize_options(cls):  # noqa: D401
         """Required by distutils."""
         pass
 

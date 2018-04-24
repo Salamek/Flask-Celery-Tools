@@ -1,9 +1,8 @@
 """Test single-instance collision."""
 
 import pytest
-
-from flask_celery.lock_manager import LockManager
 from flask_celery.exceptions import OtherInstanceError
+from flask_celery.lock_manager import LockManager
 from tests.instances import celery
 
 PARAMS = [('tests.instances.add', 8), ('tests.instances.mul', 16), ('tests.instances.sub', 0)]
@@ -55,7 +54,7 @@ def test_include_args():
     task = celery.tasks['tests.instances.mul']
 
     # First run the tasks and prevent them from removing the locks.
-    def new_exit(self, *_):
+    def new_exit(self, *_):  # noqa: D401
         """Expected to be run twice."""
         manager_instance.append(self)
         return None

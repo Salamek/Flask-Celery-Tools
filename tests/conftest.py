@@ -22,7 +22,7 @@ class Worker(threading.Thread):
 
 
 @worker_ready.connect
-def on_worker_ready(**_):
+def on_worker_ready(**_):  # noqa: D401
     """Called when the Celery worker thread is ready to do work.
 
     This is to avoid race conditions since everything is in one python process.

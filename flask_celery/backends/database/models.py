@@ -1,20 +1,24 @@
+"""SQLALchemy models."""
 
-import sqlalchemy as sa
-from flask_celery.backends.database.sessions import LockModelBase
 from datetime import datetime
+import sqlalchemy as sa
+from flask_celery.backends.database.sessions import LOCK_MODEL_BASE
 
 
-class Lock(LockModelBase):
-    """Model defying table in sqlalchemy database"""
+class Lock(LOCK_MODEL_BASE):
+    """Model defying table in sqlalchemy database."""
 
     __tablename__ = 'celeryd_lock'
     __table_args__ = {'sqlite_autoincrement': True}
 
-    id = sa.Column(sa.Integer, sa.Sequence('lock_id_sequence'),
-                   primary_key=True, autoincrement=True)
+    id = sa.Column(sa.Integer, sa.Sequence('lock_id_sequence'), primary_key=True, autoincrement=True)
     task_identifier = sa.Column(sa.String(155), unique=True)
-    created = sa.Column(sa.DateTime, default=datetime.utcnow,
-                          onupdate=datetime.utcnow, nullable=True)
+    created = sa.Column(sa.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=True)
 
     def __init__(self, task_identifier):
+        """
+        Constructor.
+
+        :param task_identifier: task identifier
+        """
         self.task_identifier = task_identifier

@@ -1,12 +1,10 @@
 """Test single-instance lock timeout."""
 
 import time
-
 import pytest
-
-from flask_celery.lock_manager import LockManager
 from flask_celery.exceptions import OtherInstanceError
-from tests.instances import celery, app
+from flask_celery.lock_manager import LockManager
+from tests.instances import celery
 
 
 @pytest.mark.parametrize('task_name,timeout', [

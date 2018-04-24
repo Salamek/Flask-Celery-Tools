@@ -1,20 +1,28 @@
+"""Redis backend."""
+
 from __future__ import absolute_import
 import redis
 from flask_celery.backends.base import LockBackend
 
 
 class LockBackendRedis(LockBackend):
-    """Lock backend implemented on redis"""
+    """Lock backend implemented on redis."""
 
     CELERY_LOCK = '_celery.single_instance.{task_id}'
 
     def __init__(self, task_lock_backend_uri):
+        """
+        Constructor.
+
+        :param task_lock_backend_uri: URI
+        """
         super(LockBackendRedis, self).__init__(task_lock_backend_uri)
         self.redis_client = redis.StrictRedis.from_url(task_lock_backend_uri)
 
     def acquire(self, task_identifier, timeout):
         """
-        Acquire lock
+        Acquire lock.
+
         :param task_identifier: task identifier
         :param timeout: lock timeout
         :return: bool
@@ -25,7 +33,8 @@ class LockBackendRedis(LockBackend):
 
     def release(self, task_identifier):
         """
-        Release lock
+        Release lock.
+
         :param task_identifier: task identifier
         :return: None
         """
@@ -34,11 +43,11 @@ class LockBackendRedis(LockBackend):
 
     def exists(self, task_identifier, timeout):
         """
-        Checks if lock exists and is valid
+        Check if lock exists and is valid.
+
         :param task_identifier: task identifier
         :param timeout: lock timeout
-        :return: 
+        :return: bool
         """
         redis_key = self.CELERY_LOCK.format(task_id=task_identifier)
         return self.redis_client.exists(redis_key)
-

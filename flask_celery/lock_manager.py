@@ -1,9 +1,10 @@
+"""Lock manager."""
 import hashlib
-from .exceptions import OtherInstanceError
-from flask_celery.backends.database import LockBackendDb
-from flask_celery.backends.redis import LockBackendRedis
-from flask_celery.backends.filesystem import LockBackendFilesystem
 from logging import getLogger
+from flask_celery.backends.database import LockBackendDb
+from flask_celery.backends.filesystem import LockBackendFilesystem
+from flask_celery.backends.redis import LockBackendRedis
+from flask_celery.exceptions import OtherInstanceError
 
 try:
     from urllib.parse import urlparse
@@ -13,7 +14,8 @@ except ImportError:
 
 def select_lock_backend(task_lock_backend):
     """
-    Detect lock backend on task_lock_backend uri
+    Detect lock backend on task_lock_backend uri.
+
     :param task_lock_backend: uri
     :return: LockBackend
     """
@@ -36,7 +38,8 @@ class LockManager(object):
 
     def __init__(self, lock_backend, celery_self, timeout, include_args, args, kwargs):
         """
-        Constructor
+        Constructor.
+
         :param celery_self: From wrapped() within single_instance(). It is the `self` object specified in a binded
             Celery task definition (implicit first argument of the Celery task when @celery.task(bind=True) is used).
         :param int timeout: Lock's timeout value in seconds.
@@ -62,6 +65,7 @@ class LockManager(object):
         return task_id
 
     def __enter__(self):
+        """Acquire lock if possible."""
         self.log.debug('Timeout %ds | Key %s', self.timeout, self.task_identifier)
         if not self.lock_backend.acquire(self.task_identifier, self.timeout):
             self.log.debug('Another instance is running.')
@@ -70,6 +74,7 @@ class LockManager(object):
             self.log.debug('Got lock, running.')
 
     def __exit__(self, exc_type, *_):
+        """Release lock."""
         if exc_type == OtherInstanceError:
             # Failed to get lock last time, not releasing.
             return
@@ -82,5 +87,5 @@ class LockManager(object):
         return self.lock_backend.exists(self.task_identifier, self.timeout)
 
     def reset_lock(self):
-        """Removed the lock regardless of timeout."""
+        """Remove the lock regardless of timeout."""
         self.lock_backend.release(self.task_identifier)

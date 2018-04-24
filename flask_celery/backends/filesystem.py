@@ -1,3 +1,5 @@
+"""Filesystem backend."""
+
 import errno
 import os
 import time
@@ -9,11 +11,16 @@ from flask_celery.backends.base import LockBackend
 
 
 class LockBackendFilesystem(LockBackend):
-    """Lock backend implemented on local filesystem"""
+    """Lock backend implemented on local filesystem."""
 
     LOCK_NAME = '{}.lock'
 
     def __init__(self, task_lock_backend_uri):
+        """
+        Constructor.
+
+        :param task_lock_backend_uri: URI
+        """
         super(LockBackendFilesystem, self).__init__(task_lock_backend_uri)
         self.log.warning('You are using filesystem locking backend which is good only for development env or for single'
                          ' task producer setup !')
@@ -29,7 +36,8 @@ class LockBackendFilesystem(LockBackend):
 
     def get_lock_path(self, task_identifier):
         """
-        Returns path to lock by task identifier
+        Return path to lock by task identifier.
+
         :param task_identifier: task identifier
         :return: str path to lock file
         """
@@ -37,16 +45,17 @@ class LockBackendFilesystem(LockBackend):
 
     def acquire(self, task_identifier, timeout):
         """
-        Acquire lock
-        :param task_identifier: task identifier
+        Acquire lock.
+
+        :param task_identifier: task identifier.
         :param timeout: lock timeout
         :return: bool
         """
         lock_path = self.get_lock_path(task_identifier)
 
         try:
-            with open(lock_path, 'r') as fr:
-                created = fr.read().strip()
+            with open(lock_path, 'r') as file_read:
+                created = file_read.read().strip()
                 if not created:
                     raise IOError
 
@@ -55,34 +64,36 @@ class LockBackendFilesystem(LockBackend):
                 else:
                     raise IOError
         except IOError:
-            with open(lock_path, 'w') as fw:
-                fw.write(str(int(time.time())))
+            with open(lock_path, 'w') as file_write:
+                file_write.write(str(int(time.time())))
             return True
 
     def release(self, task_identifier):
         """
-        Release lock
+        Release lock.
+
         :param task_identifier: task identifier
         :return: None
         """
         lock_path = self.get_lock_path(task_identifier)
         try:
             os.remove(lock_path)
-        except OSError as e:
-            if e.errno != errno.ENOENT:
+        except OSError as exception:
+            if exception.errno != errno.ENOENT:
                 raise
 
     def exists(self, task_identifier, timeout):
         """
-        Checks if lock exists and is valid
+        Check if lock exists and is valid.
+
         :param task_identifier: task identifier
         :param timeout: lock timeout
-        :return: 
+        :return: bool
         """
         lock_path = self.get_lock_path(task_identifier)
         try:
-            with open(lock_path, 'r') as fr:
-                created = fr.read().strip()
+            with open(lock_path, 'r') as file_read:
+                created = file_read.read().strip()
                 if not created:
                     raise IOError
 

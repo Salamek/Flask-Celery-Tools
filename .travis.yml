@@ -1,6 +1,7 @@
 # Configure.
 language: python
 python:
+  - 3.6
   - 3.4
   - 3.3
   - pypy
@@ -21,7 +22,7 @@ env:
   - BROKER: redis_sock,/tmp/redis.sock
 matrix:
   include:
-    - python: 3.4
+    - python: 3.6
       services: []
       env: TOX_ENV=lint
       before_script: []
@@ -50,5 +51,5 @@ deploy:
       bKa8bxjRurUEHedjV9UG9fVZwVsWU981aWOxeEl+6kLkpJ2fE9UVeK7T1O+RzzhkWhHq2/YL\
       4BjBqzOLuBSAGnXZAnwH55Z6HY2g="
   on:
-    condition: $TRAVIS_PYTHON_VERSION = 3.4
+    condition: $TRAVIS_PYTHON_VERSION = 3.6
     tags: true

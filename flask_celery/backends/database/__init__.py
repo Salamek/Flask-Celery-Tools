@@ -1,33 +1,42 @@
+"""SQLAlchemy backend."""
 
-from flask_celery.backends.base import LockBackend
 from contextlib import contextmanager
+from datetime import datetime, timedelta
+from sqlalchemy.exc import IntegrityError, ProgrammingError
+from flask_celery.backends.base import LockBackend
 from flask_celery.backends.database.models import Lock
 from flask_celery.backends.database.sessions import SessionManager
-from sqlalchemy.exc import IntegrityError, ProgrammingError
-from datetime import datetime, timedelta
 
 
 class LockBackendDb(LockBackend):
-    """Lock backend implemented on SQLAlchemy supporting multiple databases"""
+    """Lock backend implemented on SQLAlchemy supporting multiple databases."""
 
     def __init__(self, task_lock_backend_uri):
+        """
+        Constructor.
+
+        :param task_lock_backend_uri: URI
+        """
         super(LockBackendDb, self).__init__(task_lock_backend_uri)
         self.task_lock_backend_uri = task_lock_backend_uri
 
     def result_session(self, session_manager=SessionManager()):
         """
-        Returns session
+        Return session.
+
         :param session_manager: session manager to use
         :return: session
         """
         return session_manager.session_factory(self.task_lock_backend_uri)
 
+    @staticmethod
     @contextmanager
-    def session_cleanup(self, session):
+    def session_cleanup(session):
         """
-        Cleanup session
+        Cleanup session.
+
         :param session: session
-        :return: 
+        :return: None
         """
         try:
             yield
@@ -39,7 +48,8 @@ class LockBackendDb(LockBackend):
 
     def acquire(self, task_identifier, timeout):
         """
-        Acquire lock
+        Acquire lock.
+
         :param task_identifier: task identifier
         :param timeout: lock timeout
         :return: bool
@@ -63,13 +73,14 @@ class LockBackendDb(LockBackend):
                 session.add(lock)
                 session.commit()
                 return True
-            except:
+            except Exception:
                 session.rollback()
                 raise
 
     def release(self, task_identifier):
         """
-        Release lock
+        Release lock.
+
         :param task_identifier: task identifier
         :return: None
         """
@@ -80,10 +91,11 @@ class LockBackendDb(LockBackend):
 
     def exists(self, task_identifier, timeout):
         """
-        Checks if lock exists and is valid
+        Check if lock exists and is valid.
+
         :param task_identifier: task identifier
         :param timeout: lock timeout
-        :return: 
+        :return: bool
         """
         session = self.result_session()
         with self.session_cleanup(session):

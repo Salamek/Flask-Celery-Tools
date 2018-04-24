@@ -7,6 +7,7 @@ https://pypi.python.org/pypi/Flask-Celery-Helper
 import hashlib
 import redis
 import os
+import time
 import errno
 from sqlalchemy import create_engine
 import sqlalchemy as sa
@@ -97,7 +98,7 @@ class _LockBackendFilesystem(_LockBackend):
 
         try:
             with open(lock_path, 'r') as fr:
-                datetime_created = datetime.strptime(fr.read().strip(), "%Y-%m-%dT%H:%M:%S.%f")
+                datetime_created = datetime.fromtimestamp(fr.read().strip())
                 difference = datetime.utcnow() - datetime_created
                 if difference < timedelta(seconds=timeout):
                     return False
@@ -105,7 +106,7 @@ class _LockBackendFilesystem(_LockBackend):
                     raise IOError
         except IOError:
             with open(lock_path, 'w') as fw:
-                fw.write(datetime.utcnow().isoformat())
+                fw.write(time.time())
             return True
 
     def release(self, task_identifier):

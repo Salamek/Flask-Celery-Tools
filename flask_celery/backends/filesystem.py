@@ -9,6 +9,8 @@ from flask_celery.backends.base import LockBackend
 
 
 class LockBackendFilesystem(LockBackend):
+    """Lock backend implemented on local filesystem"""
+
     LOCK_NAME = '{}.lock'
 
     def __init__(self, task_lock_backend_uri):
@@ -26,9 +28,20 @@ class LockBackendFilesystem(LockBackend):
                 raise
 
     def get_lock_path(self, task_identifier):
+        """
+        Returns path to lock by task identifier
+        :param task_identifier: task identifier
+        :return: str path to lock file
+        """
         return os.path.join(self.path, self.LOCK_NAME.format(task_identifier))
 
     def acquire(self, task_identifier, timeout):
+        """
+        Acquire lock
+        :param task_identifier: task identifier
+        :param timeout: lock timeout
+        :return: bool
+        """
         lock_path = self.get_lock_path(task_identifier)
 
         try:
@@ -47,6 +60,11 @@ class LockBackendFilesystem(LockBackend):
             return True
 
     def release(self, task_identifier):
+        """
+        Release lock
+        :param task_identifier: task identifier
+        :return: None
+        """
         lock_path = self.get_lock_path(task_identifier)
         try:
             os.remove(lock_path)
@@ -55,6 +73,12 @@ class LockBackendFilesystem(LockBackend):
                 raise
 
     def exists(self, task_identifier, timeout):
+        """
+        Checks if lock exists and is valid
+        :param task_identifier: task identifier
+        :param timeout: lock timeout
+        :return: 
+        """
         lock_path = self.get_lock_path(task_identifier)
         try:
             with open(lock_path, 'r') as fr:

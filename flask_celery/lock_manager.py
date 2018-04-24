@@ -12,6 +12,11 @@ except ImportError:
 
 
 def select_lock_backend(task_lock_backend):
+    """
+    Detect lock backend on task_lock_backend uri
+    :param task_lock_backend: uri
+    :return: LockBackend
+    """
     parsed_backend_uri = urlparse(task_lock_backend)
     scheme = str(parsed_backend_uri.scheme)
 
@@ -27,11 +32,11 @@ def select_lock_backend(task_lock_backend):
 
 
 class LockManager(object):
-    """Base class for other lock managers."""
+    """Lock manager."""
 
     def __init__(self, lock_backend, celery_self, timeout, include_args, args, kwargs):
-        """May raise NotImplementedError if the Celery backend is not supported.
-
+        """
+        Constructor
         :param celery_self: From wrapped() within single_instance(). It is the `self` object specified in a binded
             Celery task definition (implicit first argument of the Celery task when @celery.task(bind=True) is used).
         :param int timeout: Lock's timeout value in seconds.

@@ -5,6 +5,7 @@ from datetime import datetime
 
 
 class Lock(LockModelBase):
+    """Model defying table in sqlalchemy database"""
 
     __tablename__ = 'celeryd_lock'
     __table_args__ = {'sqlite_autoincrement': True}

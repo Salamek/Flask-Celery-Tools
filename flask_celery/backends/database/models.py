@@ -17,9 +17,3 @@ class Lock(LockModelBase):
 
     def __init__(self, task_identifier):
         self.task_identifier = task_identifier
-
-    def to_dict(self):
-        return {
-            'task_identifier': self.task_identifier,
-            'created': self.created,
-        }

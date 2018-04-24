@@ -5,7 +5,6 @@ python:
   - 3.3
   - pypy
   - 2.7
-  - 2.6
 services:
   - redis-server
   - rabbitmq

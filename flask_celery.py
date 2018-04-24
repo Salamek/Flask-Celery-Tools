@@ -351,6 +351,12 @@ class Celery(CeleryClass):
         # Instantiate celery and read config.
         super(Celery, self).__init__(app.import_name, broker=app.config['CELERY_BROKER_URL'])
 
+        # Set filesystem lock backend as default when none is specified
+        if 'CELERY_TASK_LOCK_BACKEND' not in app.config:
+            import tempfile
+            temp_path = os.path.join(tempfile.gettempdir(), 'celery_lock')
+
+            app.config['CELERY_TASK_LOCK_BACKEND'] = 'file://{}'.format(temp_path)
         # Instantiate lock backend
         lock_backend_class = _select_lock_backend(app.config.get('CELERY_TASK_LOCK_BACKEND'))
         self.lock_backend = lock_backend_class(app.config.get('CELERY_TASK_LOCK_BACKEND'))

@@ -46,6 +46,7 @@ def generate_config():
             config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + file_path
         config['CELERY_BROKER_URL'] = 'sqla+' + config['SQLALCHEMY_DATABASE_URI']
         config['CELERY_RESULT_BACKEND'] = 'db+' + config['SQLALCHEMY_DATABASE_URI']
+        config['CELERY_TASK_LOCK_BACKEND'] = config['SQLALCHEMY_DATABASE_URI']
 
     if 'CELERY_BROKER_URL' in config and 'CELERY_RESULT_BACKEND' not in config:
         config['CELERY_RESULT_BACKEND'] = config['CELERY_BROKER_URL']

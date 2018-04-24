@@ -48,7 +48,7 @@ class _LockBackend(object):
     def release(self, task_identifier):
         raise NotImplementedError
 
-    def exists(self, task_identifier):
+    def exists(self, task_identifier, timeout):
         raise NotImplementedError
 
 
@@ -68,7 +68,7 @@ class _LockBackendRedis(_LockBackend):
         redis_key = self.CELERY_LOCK.format(task_id=task_identifier)
         self.redis_client.delete(redis_key)
 
-    def exists(self, task_identifier):
+    def exists(self, task_identifier, timeout):
         redis_key = self.CELERY_LOCK.format(task_id=task_identifier)
         return self.redis_client.exists(redis_key)
 
@@ -119,10 +119,20 @@ class _LockBackendFilesystem(_LockBackend):
             if e.errno != errno.ENOENT:
                 raise
 
-    def exists(self, task_identifier):
+    def exists(self, task_identifier, timeout):
         lock_path = self.get_lock_path(task_identifier)
-        return os.path.isfile(lock_path)
+        try:
+            with open(lock_path, 'r') as fr:
+                created = fr.read().strip()
+                if not created:
+                    raise IOError
 
+                if int(time.time()) < (int(created) + timeout):
+                    return True
+                else:
+                    raise IOError
+        except IOError:
+            return False
 
 LockModelBase = declarative_base()
 
@@ -138,13 +148,13 @@ class Lock(LockModelBase):
     created = sa.Column(sa.DateTime, default=datetime.utcnow,
                           onupdate=datetime.utcnow, nullable=True)
 
-    def __init__(self, task_id):
-        self.task_id = task_id
+    def __init__(self, task_identifier):
+        self.task_identifier = task_identifier
 
     def to_dict(self):
         return {
-            'task_id': self.task_id,
-            'date_done': self.date_done,
+            'task_identifier': self.task_identifier,
+            'created': self.created,
         }
 
 
@@ -220,10 +230,17 @@ class _LockBackendDb(_LockBackend):
             session.query(Lock).filter(Lock.task_identifier == task_identifier).delete()
             session.commit()
 
-    def exists(self, task_identifier):
+    def exists(self, task_identifier, timeout):
         session = self.result_session()
         with self.session_cleanup(session):
-            return session.query(Lock).filter(Lock.task_identifier == task_identifier).count() > 1
+            lock = session.query(Lock).filter(Lock.task_identifier == task_identifier).first()
+            if not lock:
+                return False
+            difference = datetime.utcnow() - lock.created
+            if difference < timedelta(seconds=timeout):
+                return True
+
+        return False
 
 
 class _LockManager(object):
@@ -274,7 +291,7 @@ class _LockManager(object):
     @property
     def is_already_running(self):
         """Return True if lock exists and has not timed out."""
-        return self.lock_backend.exists(self.task_identifier)
+        return self.lock_backend.exists(self.task_identifier, self.timeout)
 
     def reset_lock(self):
         """Removed the lock regardless of timeout."""

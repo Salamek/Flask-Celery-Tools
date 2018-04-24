@@ -6,6 +6,8 @@ https://pypi.python.org/pypi/Flask-Celery-Helper
 
 import hashlib
 import redis
+import os
+import errno
 from sqlalchemy import create_engine
 import sqlalchemy as sa
 from sqlalchemy.orm import sessionmaker
@@ -16,6 +18,11 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta
 from functools import partial, wraps
 from logging import getLogger
+
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
 
 from celery import _state, Celery as CeleryClass
 
@@ -31,6 +38,8 @@ class OtherInstanceError(Exception):
 
 
 class _LockBackend(object):
+    def __init__(self, task_lock_backend_uri):
+        self.log = getLogger('{}'.format(self.__class__.__name__))
 
     def acquire(self, task_identifier, timeout):
         raise NotImplementedError
@@ -46,6 +55,7 @@ class _LockBackendRedis(_LockBackend):
     CELERY_LOCK = '_celery.single_instance.{task_id}'
 
     def __init__(self, task_lock_backend_uri):
+        super(_LockBackendRedis, self).__init__(task_lock_backend_uri)
         self.redis_client = redis.StrictRedis.from_url(task_lock_backend_uri)
 
     def acquire(self, task_identifier, timeout):
@@ -60,6 +70,55 @@ class _LockBackendRedis(_LockBackend):
     def exists(self, task_identifier):
         redis_key = self.CELERY_LOCK.format(task_id=task_identifier)
         return self.redis_client.exists(redis_key)
+
+
+class _LockBackendFilesystem(_LockBackend):
+    LOCK_NAME = '{}.lock'
+
+    def __init__(self, task_lock_backend_uri):
+        super(_LockBackendFilesystem, self).__init__(task_lock_backend_uri)
+        self.log.warning('You are using filesystem locking backend which is good only for development env or for single'
+                         ' task producer setup !')
+        parsed_backend_uri = urlparse(task_lock_backend_uri)
+        self.path = parsed_backend_uri.path
+        try:
+            os.makedirs(self.path)
+        except OSError as exc:  # Python >2.5
+            if exc.errno == errno.EEXIST and os.path.isdir(self.path):
+                pass
+            else:
+                raise
+
+    def get_lock_path(self, task_identifier):
+        return os.path.join(self.path, self.LOCK_NAME.format(task_identifier))
+
+    def acquire(self, task_identifier, timeout):
+        lock_path = self.get_lock_path(task_identifier)
+
+        try:
+            with open(lock_path, 'r') as fr:
+                datetime_created = datetime.strptime(fr.read().strip(), "%Y-%m-%dT%H:%M:%S.%f")
+                difference = datetime.utcnow() - datetime_created
+                if difference < timedelta(seconds=timeout):
+                    return False
+                else:
+                    raise IOError
+        except IOError:
+            with open(lock_path, 'w') as fw:
+                fw.write(datetime.utcnow().isoformat())
+            return True
+
+    def release(self, task_identifier):
+        lock_path = self.get_lock_path(task_identifier)
+        try:
+            os.remove(lock_path)
+        except OSError as e:
+            if e.errno != errno.ENOENT:
+                raise
+
+    def exists(self, task_identifier):
+        lock_path = self.get_lock_path(task_identifier)
+        return os.path.isfile(lock_path)
 
 
 LockModelBase = declarative_base()
@@ -112,6 +171,7 @@ class SessionManager(object):
 
 class _LockBackendDb(_LockBackend):
     def __init__(self, task_lock_backend_uri):
+        super(_LockBackendDb, self).__init__(task_lock_backend_uri)
         self.task_lock_backend_uri = task_lock_backend_uri
 
     def result_session(self, session_manager=SessionManager()):
@@ -219,10 +279,15 @@ class _LockManager(object):
 
 
 def _select_lock_backend(task_lock_backend):
-    if 'redis' in task_lock_backend:
+    parsed_backend_uri = urlparse(task_lock_backend)
+    scheme = str(parsed_backend_uri.scheme)
+
+    if scheme.startswith('redis'):
         lock_manager = _LockBackendRedis
-    elif task_lock_backend.startswith('db') or task_lock_backend.startswith('database') or task_lock_backend.startswith('sql'):
+    elif scheme.startswith(('sqla+', 'db+', 'mysql', 'postgresql', 'sqlite')):
         lock_manager = _LockBackendDb
+    elif scheme.startswith('file'):
+        lock_manager = _LockBackendFilesystem
     else:
         raise NotImplementedError('No backend found for {}'.format(task_lock_backend))
     return lock_manager

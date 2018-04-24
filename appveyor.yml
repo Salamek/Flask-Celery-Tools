@@ -2,7 +2,9 @@
 services:
   - mysql
   - postgresql
-  - rabbitmq
+
+init:
+  - choco install rabbitmq --ignoredependencies -y
 
 # Environment and matrix.
 environment:

@@ -15,7 +15,8 @@ sudo: false
 env:
   - BROKER: sqlite
   - BROKER: mysql
-  - BROKER: rabbit
+  - BROKER: rabbit_redis
+  - BROKER: rabbit_filesystem
   - BROKER: postgres
   - BROKER: redis
   - BROKER: redis_sock,/tmp/redis.sock

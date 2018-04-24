@@ -3,6 +3,10 @@ from celery import _state, Celery as CeleryClass
 from functools import partial, wraps
 from flask_celery.lock_manager import select_lock_backend, LockManager
 
+__author__ = '@Robpol86'
+__license__ = 'MIT'
+__version__ = '1.1.0'
+
 try:
     from urllib.parse import urlparse
 except ImportError:

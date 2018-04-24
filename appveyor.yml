@@ -8,13 +8,13 @@ services:
 environment:
   PATH: C:\%PYTHON%;C:\%PYTHON%\Scripts;C:\Program Files\MySQL\MySQL Server 5.7\bin;C:\Program Files\PostgreSQL\9.5\bin;%PATH%
   PGPASSWORD: Password12!
-  PYTHON: Python34
+  PYTHON: Python36
   matrix:
     - TOX_ENV: lint
       BROKER: sqlite
     - TOX_ENV: py34
       BROKER: sqlite
-    - TOX_ENV: py33
+    - TOX_ENV: py36
       BROKER: sqlite
     - TOX_ENV: py27
       BROKER: sqlite
@@ -22,7 +22,7 @@ environment:
       PYTHON: Python34-x64
       BROKER: sqlite
     - TOX_ENV: py
-      PYTHON: Python33-x64
+      PYTHON: Python36-x64
       BROKER: sqlite
     - TOX_ENV: py
       PYTHON: Python27-x64
@@ -32,7 +32,7 @@ environment:
       BROKER: mysql
     - TOX_ENV: py34
       BROKER: mysql
-    - TOX_ENV: py33
+    - TOX_ENV: py36
       BROKER: mysql
     - TOX_ENV: py27
       BROKER: mysql
@@ -40,7 +40,7 @@ environment:
       PYTHON: Python34-x64
       BROKER: mysql
     - TOX_ENV: py
-      PYTHON: Python33-x64
+      PYTHON: Python36-x64
       BROKER: mysql
     - TOX_ENV: py
       PYTHON: Python27-x64
@@ -50,7 +50,7 @@ environment:
       BROKER: postgres
     - TOX_ENV: py34
       BROKER: postgres
-    - TOX_ENV: py33
+    - TOX_ENV: py36
       BROKER: postgres
     - TOX_ENV: py27
       BROKER: postgres
@@ -58,7 +58,7 @@ environment:
       PYTHON: Python34-x64
       BROKER: postgres
     - TOX_ENV: py
-      PYTHON: Python33-x64
+      PYTHON: Python36-x64
       BROKER: postgres
     - TOX_ENV: py
       PYTHON: Python27-x64
@@ -68,7 +68,7 @@ environment:
       BROKER: redis
     - TOX_ENV: py34
       BROKER: redis
-    - TOX_ENV: py33
+    - TOX_ENV: py36
       BROKER: redis
     - TOX_ENV: py27
       BROKER: redis
@@ -76,11 +76,29 @@ environment:
       PYTHON: Python34-x64
       BROKER: redis
     - TOX_ENV: py
-      PYTHON: Python33-x64
+      PYTHON: Python36-x64
       BROKER: redis
     - TOX_ENV: py
       PYTHON: Python27-x64
       BROKER: redis
+
+    - TOX_ENV: lint
+      BROKER: rabbit_redis
+    - TOX_ENV: py34
+      BROKER: rabbit_redis
+    - TOX_ENV: py36
+      BROKER: rabbit_redis
+    - TOX_ENV: py27
+      BROKER: rabbit_redis
+    - TOX_ENV: py
+      PYTHON: Python34-x64
+      BROKER: rabbit_redis
+    - TOX_ENV: py
+      PYTHON: Python36-x64
+      BROKER: rabbit_redis
+    - TOX_ENV: py
+      PYTHON: Python27-x64
+      BROKER: rabbit_redis
 
 # Run.
 build_script: pip install tox

@@ -2,8 +2,9 @@
 
 import pytest
 
-from flask_celery import _LockManager, OtherInstanceError
-from tests.instances import celery, app
+from flask_celery.lock_manager import LockManager
+from flask_celery.exceptions import OtherInstanceError
+from tests.instances import celery
 
 PARAMS = [('tests.instances.add', 8), ('tests.instances.mul', 16), ('tests.instances.sub', 0)]
 
@@ -25,10 +26,10 @@ def test_collision(task_name, expected):
     def new_exit(self, *_):
         manager_instance.append(self)
         return None
-    original_exit = _LockManager.__exit__
-    setattr(_LockManager, '__exit__', new_exit)
+    original_exit = LockManager.__exit__
+    setattr(LockManager, '__exit__', new_exit)
     assert expected == task.apply_async(args=(4, 4)).get()
-    setattr(_LockManager, '__exit__', original_exit)
+    setattr(LockManager, '__exit__', original_exit)
     assert manager_instance[0].is_already_running is True
 
     # Now run it again.
@@ -58,11 +59,11 @@ def test_include_args():
         """Expected to be run twice."""
         manager_instance.append(self)
         return None
-    original_exit = _LockManager.__exit__
-    setattr(_LockManager, '__exit__', new_exit)
+    original_exit = LockManager.__exit__
+    setattr(LockManager, '__exit__', new_exit)
     assert 16 == task.apply_async(args=(4, 4)).get()
     assert 20 == task.apply_async(args=(5, 4)).get()
-    setattr(_LockManager, '__exit__', original_exit)
+    setattr(LockManager, '__exit__', original_exit)
     assert manager_instance[0].is_already_running is True
     assert manager_instance[1].is_already_running is True
 

@@ -19,9 +19,12 @@ def generate_config():
     """
     config = dict()
 
-    if os.environ.get('BROKER') == 'rabbit':
+    if os.environ.get('BROKER') == 'rabbit_redis':
         config['CELERY_BROKER_URL'] = 'amqp://guest:guest@localhost:5672//'
         config['CELERY_TASK_LOCK_BACKEND'] = 'redis://localhost/1'
+    if os.environ.get('BROKER') == 'rabbit_filesystem':
+        config['CELERY_BROKER_URL'] = 'amqp://guest:guest@localhost:5672//'
+        config['CELERY_TASK_LOCK_BACKEND'] = 'file:///tmp/celery_lock'
     elif os.environ.get('BROKER') == 'redis':
         config['REDIS_URL'] = 'redis://localhost/1'
         config['CELERY_BROKER_URL'] = config['REDIS_URL']

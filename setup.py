@@ -8,7 +8,7 @@ import re
 from setuptools import Command, setup
 
 IMPORT = 'flask_celery'
-INSTALL_REQUIRES = ['flask', 'celery']
+INSTALL_REQUIRES = ['flask', 'celery', 'redis', 'sqlalchemy']
 LICENSE = 'MIT'
 NAME = 'Flask-Celery-Helper'
 VERSION = '1.1.0'

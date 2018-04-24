@@ -98,15 +98,17 @@ class _LockBackendFilesystem(_LockBackend):
 
         try:
             with open(lock_path, 'r') as fr:
-                datetime_created = datetime.fromtimestamp(fr.read().strip())
-                difference = datetime.utcnow() - datetime_created
-                if difference < timedelta(seconds=timeout):
+                created = fr.read().strip()
+                if not created:
+                    raise IOError
+
+                if int(time.time()) < (int(created) + timeout):
                     return False
                 else:
                     raise IOError
         except IOError:
             with open(lock_path, 'w') as fw:
-                fw.write(time.time())
+                fw.write(str(int(time.time())))
             return True
 
     def release(self, task_identifier):

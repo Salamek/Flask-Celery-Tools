@@ -3,7 +3,7 @@ from flask_celery.backends.base import LockBackend
 from contextlib import contextmanager
 from flask_celery.backends.database.models import Lock
 from flask_celery.backends.database.sessions import SessionManager
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, ProgrammingError
 from datetime import datetime, timedelta
 
 
@@ -33,7 +33,7 @@ class LockBackendDb(LockBackend):
                 session.add(lock)
                 session.commit()
                 return True
-            except IntegrityError:
+            except (IntegrityError, ProgrammingError):
                 session.rollback()
 
                 # task_id exists, lets check expiration date

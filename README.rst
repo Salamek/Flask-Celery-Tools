@@ -64,6 +64,7 @@ Basic Example
     app = Flask('example')
     app.config['CELERY_BROKER_URL'] = 'redis://localhost'
     app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost'
+    app.config['CELERY_TASK_LOCK_BACKEND'] = 'redis://localhost'
     celery = Celery(app)
 
     @celery.task()
@@ -102,6 +103,7 @@ Factory Example
         app.config['CELERY_IMPORTS'] = ('tasks.add_together', )
         app.config['CELERY_BROKER_URL'] = 'redis://localhost'
         app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost'
+        app.config['CELERY_TASK_LOCK_BACKEND'] = 'redis://localhost'
         celery.init_app(app)
         return app
 
@@ -137,6 +139,7 @@ Single Instance Example
     app.config['REDIS_URL'] = 'redis://localhost'
     app.config['CELERY_BROKER_URL'] = 'redis://localhost'
     app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost'
+    app.config['CELERY_TASK_LOCK_BACKEND'] = 'redis://localhost'
     celery = Celery(app)
     Redis(app)
 

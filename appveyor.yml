@@ -99,6 +99,24 @@ environment:
       PYTHON: Python27-x64
       BROKER: rabbit_redis
 
+    - TOX_ENV: lint
+      BROKER: rabbit_filesystem
+    - TOX_ENV: py34
+      BROKER: rabbit_filesystem
+    - TOX_ENV: py36
+      BROKER: rabbit_filesystem
+    - TOX_ENV: py27
+      BROKER: rabbit_filesystem
+    - TOX_ENV: py
+      PYTHON: Python34-x64
+      BROKER: rabbit_filesystem
+    - TOX_ENV: py
+      PYTHON: Python36-x64
+      BROKER: rabbit_filesystem
+    - TOX_ENV: py
+      PYTHON: Python27-x64
+      BROKER: rabbit_filesystem
+
 # Run.
 build_script: pip install tox
 after_build:
@@ -108,6 +126,7 @@ after_build:
   - IF %BROKER% EQU rabbit_redis cinst redis-64 rabbitmq
   - IF %BROKER% EQU rabbit_redis redis-server --service-install
   - IF %BROKER% EQU rabbit_redis redis-server --service-start
+  - IF %BROKER% EQU rabbit_filesystem cinst rabbitmq
   - IF %BROKER% EQU mysql mysql -u root -p"Password12!" -e "CREATE DATABASE flask_celery_helper_test;"
   - IF %BROKER% EQU mysql mysql -u root -p"Password12!" -e "GRANT ALL PRIVILEGES ON flask_celery_helper_test.* TO 'user'@'localhost' IDENTIFIED BY 'pass';"
   - IF %BROKER% EQU postgres psql -U postgres -c "CREATE DATABASE flask_celery_helper_test;"

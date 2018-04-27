@@ -135,8 +135,8 @@ after_build:
 
   - IF %BROKER% EQU rabbit_filesystem cinst rabbitmq
 
-  - IF "%BROKER:~0,6%"=="rabbit" ps: 'C:\projects\pika\testdata\wait-epmd.ps1'
-  - IF "%BROKER:~0,6%"=="rabbit" ps: 'C:\projects\pika\testdata\wait-rabbitmq.ps1'
+  - IF "%BROKER:~0,6%"=="rabbit" ps: 'C:\projects\flask-celery-helper\testdata\wait-epmd.ps1'
+  - IF "%BROKER:~0,6%"=="rabbit" ps: 'C:\projects\flask-celery-helper\testdata\wait-rabbitmq.ps1'
 
   - IF %BROKER% EQU mysql mysql -u root -p"Password12!" -e "CREATE DATABASE flask_celery_helper_test;"
   - IF %BROKER% EQU mysql mysql -u root -p"Password12!" -e "GRANT ALL PRIVILEGES ON flask_celery_helper_test.* TO 'user'@'localhost' IDENTIFIED BY 'pass';"

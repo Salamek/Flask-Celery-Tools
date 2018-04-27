@@ -5,6 +5,7 @@ services:
 
 cache:
   - C:\Users\appveyor\AppData\Local\Temp\chocolatey
+  - C:\Users\appveyor\AppData\Local\Temp\1\chocolatey
 
 # Environment and matrix.
 environment:
@@ -126,14 +127,23 @@ after_build:
   - IF %BROKER% EQU redis cinst redis-64
   - IF %BROKER% EQU redis redis-server --service-install
   - IF %BROKER% EQU redis redis-server --service-start
+
   - IF %BROKER% EQU rabbit_redis cinst redis-64 rabbitmq
   - IF %BROKER% EQU rabbit_redis redis-server --service-install
   - IF %BROKER% EQU rabbit_redis redis-server --service-start
+
   - IF %BROKER% EQU rabbit_filesystem cinst rabbitmq
+
+  - IF "%BROKER:~0,6%"=="rabbit" ps: 'C:\projects\pika\testdata\wait-epmd.ps1'
+  - IF "%BROKER:~0,6%"=="rabbit" ps: 'C:\projects\pika\testdata\wait-rabbitmq.ps1'
+  - IF "%BROKER:~0,6%"=="rabbit" cmd /c "C:\Program Files\RabbitMQ Server\rabbitmq_server-%rabbitmq_version%\sbin\rabbitmqctl.bat" status
+
   - IF %BROKER% EQU mysql mysql -u root -p"Password12!" -e "CREATE DATABASE flask_celery_helper_test;"
   - IF %BROKER% EQU mysql mysql -u root -p"Password12!" -e "GRANT ALL PRIVILEGES ON flask_celery_helper_test.* TO 'user'@'localhost' IDENTIFIED BY 'pass';"
+
   - IF %BROKER% EQU postgres psql -U postgres -c "CREATE DATABASE flask_celery_helper_test;"
   - IF %BROKER% EQU postgres psql -U postgres -c "CREATE USER user1 WITH PASSWORD 'pass';"
   - IF %BROKER% EQU postgres psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE flask_celery_helper_test TO user1;"
+
 test_script: tox -e %TOX_ENV%
 on_success: IF %TOX_ENV% NEQ lint pip install codecov & codecov

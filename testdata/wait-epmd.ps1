@@ -1,6 +1,8 @@
 $running = $false
 [int]$count = 1
 
+Write-Host '[INFO] Waiting for epmd to report that RabbitMQ has started...'
+
 $epmd = [System.IO.Path]::Combine($env:ERLANG_HOME, $env:erlang_erts_version, "bin", "epmd.exe")
 
 Do {

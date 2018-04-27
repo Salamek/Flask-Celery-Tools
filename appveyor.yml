@@ -14,6 +14,43 @@ environment:
   PYTHON: Python36
   matrix:
     - TOX_ENV: lint
+      BROKER: rabbit_redis
+    - TOX_ENV: py34
+      BROKER: rabbit_redis
+    - TOX_ENV: py36
+      BROKER: rabbit_redis
+    - TOX_ENV: py27
+      BROKER: rabbit_redis
+    - TOX_ENV: py
+      PYTHON: Python34-x64
+      BROKER: rabbit_redis
+    - TOX_ENV: py
+      PYTHON: Python36-x64
+      BROKER: rabbit_redis
+    - TOX_ENV: py
+      PYTHON: Python27-x64
+      BROKER: rabbit_redis
+
+    - TOX_ENV: lint
+      BROKER: rabbit_filesystem
+    - TOX_ENV: py34
+      BROKER: rabbit_filesystem
+    - TOX_ENV: py36
+      BROKER: rabbit_filesystem
+    - TOX_ENV: py27
+      BROKER: rabbit_filesystem
+    - TOX_ENV: py
+      PYTHON: Python34-x64
+      BROKER: rabbit_filesystem
+    - TOX_ENV: py
+      PYTHON: Python36-x64
+      BROKER: rabbit_filesystem
+    - TOX_ENV: py
+      PYTHON: Python27-x64
+      BROKER: rabbit_filesystem
+
+
+    - TOX_ENV: lint
       BROKER: sqlite
     - TOX_ENV: py34
       BROKER: sqlite
@@ -84,42 +121,6 @@ environment:
     - TOX_ENV: py
       PYTHON: Python27-x64
       BROKER: redis
-
-    - TOX_ENV: lint
-      BROKER: rabbit_redis
-    - TOX_ENV: py34
-      BROKER: rabbit_redis
-    - TOX_ENV: py36
-      BROKER: rabbit_redis
-    - TOX_ENV: py27
-      BROKER: rabbit_redis
-    - TOX_ENV: py
-      PYTHON: Python34-x64
-      BROKER: rabbit_redis
-    - TOX_ENV: py
-      PYTHON: Python36-x64
-      BROKER: rabbit_redis
-    - TOX_ENV: py
-      PYTHON: Python27-x64
-      BROKER: rabbit_redis
-
-    - TOX_ENV: lint
-      BROKER: rabbit_filesystem
-    - TOX_ENV: py34
-      BROKER: rabbit_filesystem
-    - TOX_ENV: py36
-      BROKER: rabbit_filesystem
-    - TOX_ENV: py27
-      BROKER: rabbit_filesystem
-    - TOX_ENV: py
-      PYTHON: Python34-x64
-      BROKER: rabbit_filesystem
-    - TOX_ENV: py
-      PYTHON: Python36-x64
-      BROKER: rabbit_filesystem
-    - TOX_ENV: py
-      PYTHON: Python27-x64
-      BROKER: rabbit_filesystem
 
 # Run.
 build_script: pip install tox

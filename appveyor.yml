@@ -4,7 +4,7 @@ services:
   - postgresql
 
 cache:
-  - "%HOMEDRIVE%%HOMEPATH%\rabbitmq-server-3.7.6.exe" -> appveyor.yml
+  - "%HOMEDRIVE%%HOMEPATH%\rabbitmq-server-3.7.6.exe"
 
 # Environment and matrix.
 environment:

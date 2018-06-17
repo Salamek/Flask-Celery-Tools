@@ -13,135 +13,202 @@ environment:
   PYTHON: Python36
   matrix:
     - TOX_ENV: lint
-      BROKER: rabbit_redis
+      BROKER: rabbit
+      RESULT: redis
+      LOCK: redis
     - TOX_ENV: py34
-      BROKER: rabbit_redis
+      BROKER: rabbit
+      RESULT: redis
+      LOCK: redis
     - TOX_ENV: py36
-      BROKER: rabbit_redis
+      BROKER: rabbit
+      RESULT: redis
+      LOCK: redis
     - TOX_ENV: py27
-      BROKER: rabbit_redis
+      BROKER: rabbit
+      RESULT: redis
+      LOCK: redis
     - TOX_ENV: py
       PYTHON: Python34-x64
-      BROKER: rabbit_redis
+      BROKER: rabbit
+      RESULT: redis
+      LOCK: redis
     - TOX_ENV: py
       PYTHON: Python36-x64
-      BROKER: rabbit_redis
+      BROKER: rabbit
+      RESULT: redis
+      LOCK: redis
     - TOX_ENV: py
       PYTHON: Python27-x64
-      BROKER: rabbit_redis
+      BROKER: rabbit
+      RESULT: redis
+      LOCK: redis
 
     - TOX_ENV: lint
-      BROKER: rabbit_filesystem
+      BROKER: rabbit
+      RESULT: redis
+      LOCK: filesystem
     - TOX_ENV: py34
-      BROKER: rabbit_filesystem
+      BROKER: rabbit
+      RESULT: redis
+      LOCK: filesystem
     - TOX_ENV: py36
-      BROKER: rabbit_filesystem
+      BROKER: rabbit
+      RESULT: redis
+      LOCK: filesystem
     - TOX_ENV: py27
-      BROKER: rabbit_filesystem
+      BROKER: rabbit
+      RESULT: redis
+      LOCK: filesystem
     - TOX_ENV: py
       PYTHON: Python34-x64
-      BROKER: rabbit_filesystem
+      BROKER: rabbit
+      RESULT: redis
+      LOCK: filesystem
     - TOX_ENV: py
       PYTHON: Python36-x64
-      BROKER: rabbit_filesystem
+      BROKER: rabbit
+      RESULT: redis
+      LOCK: filesystem
     - TOX_ENV: py
       PYTHON: Python27-x64
-      BROKER: rabbit_filesystem
+      BROKER: rabbit
+      RESULT: redis
+      LOCK: filesystem
 
 
     - TOX_ENV: lint
       BROKER: sqlite
+      RESULT: sqlite
+      LOCK: sqlite
     - TOX_ENV: py34
       BROKER: sqlite
+      RESULT: sqlite
+      LOCK: sqlite
     - TOX_ENV: py36
       BROKER: sqlite
+      RESULT: sqlite
+      LOCK: sqlite
     - TOX_ENV: py27
       BROKER: sqlite
+      RESULT: sqlite
+      LOCK: sqlite
     - TOX_ENV: py
       PYTHON: Python34-x64
       BROKER: sqlite
+      RESULT: sqlite
+      LOCK: sqlite
     - TOX_ENV: py
       PYTHON: Python36-x64
       BROKER: sqlite
+      RESULT: sqlite
+      LOCK: sqlite
     - TOX_ENV: py
       PYTHON: Python27-x64
       BROKER: sqlite
+      RESULT: sqlite
+      LOCK: sqlite
 
     - TOX_ENV: lint
       BROKER: mysql
+      RESULT: mysql
+      LOCK: mysql
     - TOX_ENV: py34
       BROKER: mysql
+      RESULT: mysql
+      LOCK: mysql
     - TOX_ENV: py36
       BROKER: mysql
+      RESULT: mysql
+      LOCK: mysql
     - TOX_ENV: py27
       BROKER: mysql
+      RESULT: mysql
+      LOCK: mysql
     - TOX_ENV: py
       PYTHON: Python34-x64
       BROKER: mysql
+      RESULT: mysql
+      LOCK: mysql
     - TOX_ENV: py
       PYTHON: Python36-x64
       BROKER: mysql
+      RESULT: mysql
+      LOCK: mysql
     - TOX_ENV: py
       PYTHON: Python27-x64
       BROKER: mysql
+      RESULT: mysql
+      LOCK: mysql
 
     - TOX_ENV: lint
       BROKER: postgres
+      RESULT: postgres
+      LOCK: postgres
     - TOX_ENV: py34
       BROKER: postgres
+      RESULT: postgres
+      LOCK: postgres
     - TOX_ENV: py36
       BROKER: postgres
+      RESULT: postgres
+      LOCK: postgres
     - TOX_ENV: py27
       BROKER: postgres
+      RESULT: postgres
+      LOCK: postgres
     - TOX_ENV: py
       PYTHON: Python34-x64
       BROKER: postgres
+      RESULT: postgres
+      LOCK: postgres
     - TOX_ENV: py
       PYTHON: Python36-x64
       BROKER: postgres
+      RESULT: postgres
+      LOCK: postgres
     - TOX_ENV: py
       PYTHON: Python27-x64
       BROKER: postgres
+      RESULT: postgres
+      LOCK: postgres
 
     - TOX_ENV: lint
       BROKER: redis
+      RESULT: redis
+      LOCK: redis
     - TOX_ENV: py34
       BROKER: redis
+      RESULT: redis
+      LOCK: redis
     - TOX_ENV: py36
       BROKER: redis
+      RESULT: redis
+      LOCK: redis
     - TOX_ENV: py27
       BROKER: redis
+      RESULT: redis
+      LOCK: redis
     - TOX_ENV: py
       PYTHON: Python34-x64
       BROKER: redis
+      RESULT: redis
+      LOCK: redis
     - TOX_ENV: py
       PYTHON: Python36-x64
       BROKER: redis
+      RESULT: redis
+      LOCK: redis
     - TOX_ENV: py
       PYTHON: Python27-x64
       BROKER: redis
+      RESULT: redis
+      LOCK: redis
 
 # Run.
 build_script: pip install tox
 after_build:
-  - IF %BROKER% EQU redis cinst redis-64
-  - IF %BROKER% EQU redis redis-server --service-install
-  - IF %BROKER% EQU redis redis-server --service-start
-
-  - IF %BROKER% EQU rabbit_redis cinst redis-64
-  - IF %BROKER% EQU rabbit_redis redis-server --service-install
-  - IF %BROKER% EQU rabbit_redis redis-server --service-start
-
-  - IF %BROKER% EQU rabbit_filesystem cinst
-
-  - IF "%BROKER:~0,6%"=="rabbit" ps: .\testdata\appveyor\install-rabbitmq.ps1
-
-  - IF %BROKER% EQU mysql mysql -u root -p"Password12!" -e "CREATE DATABASE flask_celery_helper_test;"
-  - IF %BROKER% EQU mysql mysql -u root -p"Password12!" -e "GRANT ALL PRIVILEGES ON flask_celery_helper_test.* TO 'user'@'localhost' IDENTIFIED BY 'pass';"
-
-  - IF %BROKER% EQU postgres psql -U postgres -c "CREATE DATABASE flask_celery_helper_test;"
-  - IF %BROKER% EQU postgres psql -U postgres -c "CREATE USER user1 WITH PASSWORD 'pass';"
-  - IF %BROKER% EQU postgres psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE flask_celery_helper_test TO user1;"
+  - ps: .\testdata\appveyor\setup.ps1
 
 test_script: tox -e %TOX_ENV%
 on_success: IF %TOX_ENV% NEQ lint pip install codecov & codecov

@@ -19,43 +19,43 @@ def generate_config():
     """
     config = dict()
 
-    if os.environ.get('BROKER') == 'rabbit_redis':
-        config['CELERY_BROKER_URL'] = 'amqp://guest:guest@localhost:5672//'
-        config['CELERY_TASK_LOCK_BACKEND'] = 'redis://localhost/1'
-    elif os.environ.get('BROKER') == 'rabbit_filesystem':
-        config['CELERY_BROKER_URL'] = 'amqp://guest:guest@localhost:5672//'
-        config['CELERY_TASK_LOCK_BACKEND'] = 'file:///tmp/celery_lock'
-    elif os.environ.get('BROKER') == 'redis':
-        config['REDIS_URL'] = 'redis://localhost/1'
-        config['CELERY_BROKER_URL'] = config['REDIS_URL']
-    elif os.environ.get('BROKER', '').startswith('redis_sock,'):
-        config['REDIS_URL'] = 'redis+socket://' + os.environ['BROKER'].split(',', 1)[1]
-        config['CELERY_BROKER_URL'] = config['REDIS_URL']
-    elif os.environ.get('BROKER') == 'mongo':
-        config['CELERY_BROKER_URL'] = 'mongodb://user:pass@localhost/test'
-    elif os.environ.get('BROKER') == 'couch':
-        config['CELERY_BROKER_URL'] = 'couchdb://user:pass@localhost/test'
-    elif os.environ.get('BROKER') == 'beanstalk':
-        config['CELERY_BROKER_URL'] = 'beanstalk://user:pass@localhost/test'
-    elif os.environ.get('BROKER') == 'iron':
-        config['CELERY_BROKER_URL'] = 'ironmq://project:token@/test'
-    else:
-        if os.environ.get('BROKER') == 'mysql':
-            config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://user:pass@localhost/flask_celery_helper_test'
-        elif os.environ.get('BROKER') == 'postgres':
-            config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+pg8000://user1:pass@localhost/flask_celery_helper_test'
-        else:
-            file_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'test_database.sqlite')
-            config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + file_path
-        config['CELERY_BROKER_URL'] = 'sqla+' + config['SQLALCHEMY_DATABASE_URI']
-        config['CELERY_RESULT_BACKEND'] = 'db+' + config['SQLALCHEMY_DATABASE_URI']
-        config['CELERY_TASK_LOCK_BACKEND'] = config['SQLALCHEMY_DATABASE_URI']
+    all_envs = [
+        os.environ.get('BROKER'),
+        os.environ.get('RESULT'),
+        os.environ.get('LOCK')
+    ]
+    print(all_envs)
+    for env in all_envs:
+        if not env:
+            raise Exception('All required env variables must be set!')
 
-    if 'CELERY_BROKER_URL' in config and 'CELERY_RESULT_BACKEND' not in config:
-        config['CELERY_RESULT_BACKEND'] = config['CELERY_BROKER_URL']
+    backends = {
+        'rabbit': 'amqp://guest:guest@localhost:5672//',
+        'redis': 'redis://localhost/1',
+        'redis_sock': 'redis+socket:///tmp/redis.sock',
+        'filesystem': 'file:///tmp/celery_lock',
+        'mongo': 'mongodb://user:pass@localhost/test',
+        'couch': 'couchdb://user:pass@localhost/test',
+        'beanstalk': 'beanstalk://user:pass@localhost/test',
+        'iron': 'ironmq://project:token@/test',
+        'mysql': 'mysql+pymysql://user:pass@localhost/flask_celery_helper_test',
+        'postgres': 'postgresql+pg8000://user1:pass@localhost/flask_celery_helper_test',
+        'sqlite': 'sqlite:///{}'.format(
+            os.path.join(os.path.abspath(os.path.dirname(__file__)), 'test_database.sqlite')
+        )
+    }
 
-    if 'CELERY_BROKER_URL' in config and 'CELERY_TASK_LOCK_BACKEND' not in config:
-        config['CELERY_TASK_LOCK_BACKEND'] = config['CELERY_BROKER_URL']
+    config['CELERY_BROKER_URL'] = backends.get(os.environ.get('BROKER'))
+    config['CELERY_RESULT_BACKEND'] = backends.get(os.environ.get('RESULT'))
+    config['CELERY_TASK_LOCK_BACKEND'] = backends.get(os.environ.get('LOCK'))
+
+    if 'redis' in all_envs:
+        config['REDIS_URL'] = backends['redis']
+    elif 'redis_sock' in all_envs:
+        config['REDIS_URL'] = backends['redis_sock']
+
+    if os.environ.get('RESULT') in ['mysql', 'postgres', 'sqlite']:
+        config['SQLALCHEMY_DATABASE_URI'] = config['CELERY_RESULT_BACKEND']
 
     return config
 

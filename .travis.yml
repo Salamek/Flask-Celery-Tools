@@ -13,13 +13,13 @@ sudo: false
 
 # Environment and matrix.
 env:
-  - BROKER: sqlite
-  - BROKER: mysql
-  - BROKER: rabbit_redis
-  - BROKER: rabbit_filesystem
-  - BROKER: postgres
-  - BROKER: redis
-  - BROKER: redis_sock,/tmp/redis.sock
+  - BROKER=sqlite RESULT=sqlite LOCK=sqlite
+  - BROKER=mysql RESULT=mysql LOCK=mysql
+  - BROKER=rabbit RESULT=redis LOCK=redis
+  - BROKER=rabbit RESULT=redis LOCK=filesystem
+  - BROKER=postgres RESULT=postgres LOCK=postgres
+  - BROKER=redis RESULT=redis LOCK=redis
+  - BROKER=redis_sock RESULT=redis_sock LOCK=redis_sock
 matrix:
   include:
     - python: 3.6
@@ -31,12 +31,8 @@ matrix:
 # Run.
 install: pip install tox
 before_script:
-  - if [[ $BROKER == redis_sock* ]]; then echo -e "daemonize yes\nunixsocket /tmp/redis.sock\nport 0" |redis-server -; fi
-  - if [ $BROKER == mysql ]; then mysql -u root -e 'CREATE DATABASE flask_celery_helper_test;'; fi
-  - if [ $BROKER == mysql ]; then mysql -u root -e 'GRANT ALL PRIVILEGES ON flask_celery_helper_test.* TO "user"@"localhost" IDENTIFIED BY "pass";'; fi
-  - if [ $BROKER == postgres ]; then psql -U postgres -c 'CREATE DATABASE flask_celery_helper_test;'; fi
-  - if [ $BROKER == postgres ]; then psql -U postgres -c "CREATE USER user1 WITH PASSWORD 'pass';"; fi
-  - if [ $BROKER == postgres ]; then psql -U postgres -c 'GRANT ALL PRIVILEGES ON DATABASE flask_celery_helper_test TO user1;'; fi
+  - ./testdata/travis/setup.sh
+
 script: tox -e ${TOX_ENV:-py}
 after_success:
   - bash <(curl -s https://codecov.io/bash)

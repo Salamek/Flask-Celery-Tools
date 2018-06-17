@@ -22,5 +22,5 @@ if ($params -contains 'redis')
 
 if ($params -contains 'rabbit')
 {
-    & "install-rabbitmq.ps1"
+    & ((Split-Path $MyInvocation.InvocationName) + "\install-rabbitmq.ps1")
 }

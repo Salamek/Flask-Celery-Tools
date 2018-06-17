@@ -24,7 +24,7 @@ def generate_config():
         os.environ.get('RESULT'),
         os.environ.get('LOCK')
     ]
-    print(all_envs)
+
     for env in all_envs:
         if not env:
             raise Exception('All required env variables must be set!')

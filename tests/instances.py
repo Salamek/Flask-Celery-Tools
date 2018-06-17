@@ -55,7 +55,11 @@ def generate_config():
         config['REDIS_URL'] = backends['redis_sock']
 
     if os.environ.get('RESULT') in ['mysql', 'postgres', 'sqlite']:
-        config['SQLALCHEMY_DATABASE_URI'] = config['CELERY_RESULT_BACKEND']
+        config['CELERY_RESULT_BACKEND'] = 'db+' + config['CELERY_RESULT_BACKEND']
+        config['SQLALCHEMY_DATABASE_URI'] = backends.get(os.environ.get('RESULT'))
+
+    if os.environ.get('BROKER') in ['mysql', 'postgres', 'sqlite']:
+        config['CELERY_BROKER_URL'] = 'sqla+' + config['CELERY_BROKER_URL']
 
     return config
 

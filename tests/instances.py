@@ -19,13 +19,13 @@ def generate_config():
     """
     config = dict()
 
-    all_envs = [
+    all_env_variables = [
         os.environ.get('BROKER'),
         os.environ.get('RESULT'),
         os.environ.get('LOCK')
     ]
 
-    for env in all_envs:
+    for env in all_env_variables:
         if not env:
             raise Exception('All required env variables must be set!')
 
@@ -49,9 +49,9 @@ def generate_config():
     config['CELERY_RESULT_BACKEND'] = backends.get(os.environ.get('RESULT'))
     config['CELERY_TASK_LOCK_BACKEND'] = backends.get(os.environ.get('LOCK'))
 
-    if 'redis' in all_envs:
+    if 'redis' in all_env_variables:
         config['REDIS_URL'] = backends['redis']
-    elif 'redis_sock' in all_envs:
+    elif 'redis_sock' in all_env_variables:
         config['REDIS_URL'] = backends['redis_sock']
 
     if os.environ.get('RESULT') in ['mysql', 'postgres', 'sqlite']:

@@ -4,22 +4,22 @@ stages:
   - packagetest
   - deploy
 
-test:debian:
-  stage: test
-  script:
-    - apt-get update -qy
-    - apt-get install python3-setuptools -qy
-    - python3 setup.py test
-  tags:
-    - debian
+#test:debian:
+#  stage: test
+#  script:
+#    - apt-get update -qy
+#    - apt-get install python3-setuptools -qy
+#    - python3 setup.py test
+#  tags:
+#    - debian
 
-test:archlinux:
-  stage: test
-  script:
-    - pacman -Syu python-setuptools --noconfirm
-    - python setup.py test
-  tags:
-    - archlinux
+#test:archlinux:
+#  stage: test
+#  script:
+#    - pacman -Syu python-setuptools --noconfirm
+#    - python setup.py test
+#  tags:
+#    - archlinux
 
 package:debian:
   stage: package

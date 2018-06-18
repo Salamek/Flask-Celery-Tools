@@ -1,0 +1,27 @@
+pkgname=python-flask-celery-helper
+pkgver=1.1.0
+pkgdesc="Celery support for Flask without breaking PyCharm inspections."
+pkgrel=1
+arch=('any')
+license=('MIT')
+url='https://github.com/Salamek/Flask-Celery-Helper'
+makedepends=('python-setuptools')
+depends=(
+    'python-celery'
+    'python-flask'
+    'python-redis'
+    'python-sqlalchemy'
+)
+
+prepare() {
+  mkdir -p "${srcdir}/${pkgname}"
+  cp -R "${srcdir}/../../flask_celery" "${srcdir}/${pkgname}"
+  cp -R "${srcdir}/../../tests" "${srcdir}/${pkgname}"
+  cp -R "${srcdir}/../../setup.py" "${srcdir}/${pkgname}"
+  cp -R "${srcdir}/../../README.rst" "${srcdir}/${pkgname}"
+}
+
+package() {
+  cd "${srcdir}/${pkgname}"
+  python setup.py install --root="$pkgdir/" --optimize=1
+}

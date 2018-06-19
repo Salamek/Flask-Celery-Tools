@@ -1,5 +1,5 @@
 pkgname=python-flask-celery-helper
-pkgver=1.2.1
+pkgver=1.2.2
 pkgdesc="Celery support for Flask without breaking PyCharm inspections."
 pkgrel=1
 arch=('any')

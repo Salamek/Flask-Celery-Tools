@@ -27,6 +27,7 @@ package:debian:
     - apt-get update -qy
     - apt-get install -y python-all python3-stdeb python3-celery python3-flask python3-redis python3-sqlalchemy
     - rm -rf "./deb_dist"
+    - sed -i -e "s/, 'sqlalchemy'//g" setup.py # Hack
     - python3 setup.py --command-packages=stdeb.command bdist_deb
   tags:
     - debian

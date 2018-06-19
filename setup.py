@@ -5,7 +5,7 @@ import codecs
 import os
 import re
 
-from setuptools import Command, setup
+from setuptools import Command, setup, find_packages
 
 IMPORT = 'flask_celery'
 INSTALL_REQUIRES = ['flask', 'celery', 'redis', 'sqlalchemy']
@@ -101,7 +101,7 @@ if __name__ == '__main__':
         license=LICENSE,
         long_description=readme(),
         name=NAME,
-        py_modules=[IMPORT],
+        packages=find_packages(exclude=['tests', 'tests.*']),
         url='https://github.com/Robpol86/' + NAME,
         version=VERSION,
         zip_safe=False,

@@ -7,7 +7,7 @@ from flask_celery.lock_manager import LockManager, select_lock_backend
 
 __author__ = '@Robpol86'
 __license__ = 'MIT'
-__version__ = '1.2.3'
+__version__ = '1.2.4'
 
 
 class _CeleryState(object):

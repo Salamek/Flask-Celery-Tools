@@ -137,6 +137,9 @@ def single_instance(func=None, lock_timeout=None, include_args=False):
 
         # Lock and execute.
         with lock_manager:
+            if celery_self.__bound__:
+                args = list(args)
+                args.insert(0, celery_self)
             ret_value = func(*args, **kwargs)
         return ret_value
     return wrapped

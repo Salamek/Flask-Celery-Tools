@@ -1,16 +1,19 @@
 """Flask Celery Helper."""
 
 import os
+import tempfile
 from functools import partial, wraps
+
 from celery import _state, Celery as CeleryClass
+
 from flask_celery.lock_manager import LockManager, select_lock_backend
 
-__author__ = '@Robpol86'
+__author__ = '@Salamek'
 __license__ = 'MIT'
 __version__ = '1.2.4'
 
 
-class _CeleryState(object):
+class _CeleryState:
     """Remember the configuration for the (celery, app) tuple. Modeled from SQLAlchemy."""
 
     def __init__(self, celery, app):
@@ -46,7 +49,7 @@ class Celery(CeleryClass):
         self.original_register_app = _state._register_app  # Backup Celery app registration function.
         self.lock_backend = None
         _state._register_app = lambda _: None  # Upon Celery app registration attempt, do nothing.
-        super(Celery, self).__init__()
+        super().__init__()
         if app is not None:
             self.init_app(app)
 
@@ -63,11 +66,10 @@ class Celery(CeleryClass):
         app.extensions['celery'] = _CeleryState(self, app)
 
         # Instantiate celery and read config.
-        super(Celery, self).__init__(app.import_name, broker=app.config['CELERY_BROKER_URL'])
+        super().__init__(app.import_name, broker=app.config['CELERY_BROKER_URL'])
 
         # Set filesystem lock backend as default when none is specified
         if 'CELERY_TASK_LOCK_BACKEND' not in app.config:
-            import tempfile
             temp_path = os.path.join(tempfile.gettempdir(), 'celery_lock')
 
             app.config['CELERY_TASK_LOCK_BACKEND'] = 'file://{}'.format(temp_path)

@@ -3,10 +3,8 @@
 import errno
 import os
 import time
-try:
-    from urllib.parse import urlparse
-except ImportError:
-    from urlparse import urlparse
+from urllib.parse import urlparse
+
 from flask_celery.backends.base import LockBackend
 
 
@@ -21,7 +19,7 @@ class LockBackendFilesystem(LockBackend):
 
         :param task_lock_backend_uri: URI
         """
-        super(LockBackendFilesystem, self).__init__(task_lock_backend_uri)
+        super().__init__(task_lock_backend_uri)
         self.log.warning('You are using filesystem locking backend which is good only for development env or for single'
                          ' task producer setup !')
         parsed_backend_uri = urlparse(task_lock_backend_uri)
@@ -61,8 +59,7 @@ class LockBackendFilesystem(LockBackend):
 
                 if int(time.time()) < (int(created) + timeout):
                     return False
-                else:
-                    raise IOError
+                raise IOError
         except IOError:
             with open(lock_path, 'w') as file_write:
                 file_write.write(str(int(time.time())))
@@ -99,7 +96,6 @@ class LockBackendFilesystem(LockBackend):
 
                 if int(time.time()) < (int(created) + timeout):
                     return True
-                else:
-                    raise IOError
+                raise IOError
         except IOError:
             return False

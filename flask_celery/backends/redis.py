@@ -1,7 +1,7 @@
 """Redis backend."""
 
-from __future__ import absolute_import
 import redis
+
 from flask_celery.backends.base import LockBackend
 
 
@@ -16,7 +16,7 @@ class LockBackendRedis(LockBackend):
 
         :param task_lock_backend_uri: URI
         """
-        super(LockBackendRedis, self).__init__(task_lock_backend_uri)
+        super().__init__(task_lock_backend_uri)
         self.redis_client = redis.StrictRedis.from_url(task_lock_backend_uri)
 
     def acquire(self, task_identifier, timeout):

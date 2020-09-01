@@ -1,6 +1,7 @@
 """Test backend."""
 
 import pytest
+
 from flask_celery.backends.base import LockBackend
 from flask_celery.lock_manager import select_lock_backend
 

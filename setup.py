@@ -1,21 +1,20 @@
 #!/usr/bin/env python
 """Setup script for the project."""
 
-import codecs
 import os
 import re
 
-from setuptools import Command, setup, find_packages
+from setuptools import Command, find_packages, setup
 
 IMPORT = 'flask_celery'
 INSTALL_REQUIRES = ['flask', 'celery', 'redis', 'sqlalchemy']
 LICENSE = 'MIT'
-NAME = 'Flask-Celery-Helper'
+NAME = 'Flask-Celery-Tools'
 VERSION = '1.2.4'
 
 
-def readme(path='README.rst'):
-    """Try to read README.rst or return empty string if failed.
+def readme(path='README.md') -> str:
+    """Try to read README.md or return empty string if failed.
 
     :param str path: Path to README file.
 
@@ -23,15 +22,8 @@ def readme(path='README.rst'):
     :rtype: str
     """
     path = os.path.realpath(os.path.join(os.path.dirname(__file__), path))
-    handle = None
-    url_prefix = 'https://raw.githubusercontent.com/Robpol86/{name}/v{version}/'.format(name=NAME, version=VERSION)
-    try:
-        handle = codecs.open(path, encoding='utf-8')
-        return handle.read(131072).replace('.. image:: docs', '.. image:: {0}docs'.format(url_prefix))
-    except IOError:
-        return ''
-    finally:
-        getattr(handle, 'close', lambda: None)()
+    with open(path, 'r') as readme_handle:
+        return readme_handle.read()
 
 
 class CheckVersion(Command):
@@ -43,18 +35,16 @@ class CheckVersion(Command):
     @classmethod
     def initialize_options(cls):  # noqa: D401
         """Required by distutils."""
-        pass
 
     @classmethod
     def finalize_options(cls):  # noqa: D401
         """Required by distutils."""
-        pass
 
     @classmethod
     def run(cls):
         """Check variables."""
         project = __import__(IMPORT, fromlist=[''])
-        for expected, var in [('@Robpol86', '__author__'), (LICENSE, '__license__'), (VERSION, '__version__')]:
+        for expected, var in [('@Salamek', '__author__'), (LICENSE, '__license__'), (VERSION, '__version__')]:
             if getattr(project, var) != expected:
                 raise SystemExit('Mismatch: {0}'.format(var))
         # Check changelog.
@@ -73,8 +63,8 @@ class CheckVersion(Command):
 
 if __name__ == '__main__':
     setup(
-        author='@Robpol86',
-        author_email='robpol86@gmail.com',
+        author='@Salamek',
+        author_email='adam.schubert@sg1-game.net',
         classifiers=[
             'Development Status :: 5 - Production/Stable',
             'Environment :: Web Environment',
@@ -87,8 +77,6 @@ if __name__ == '__main__':
             'Operating System :: Microsoft :: Windows',
             'Operating System :: POSIX',
             'Operating System :: POSIX :: Linux',
-            'Programming Language :: Python :: 2.6',
-            'Programming Language :: Python :: 2.7',
             'Programming Language :: Python :: 3.3',
             'Programming Language :: Python :: 3.4',
             'Programming Language :: Python :: Implementation :: PyPy',
@@ -100,9 +88,10 @@ if __name__ == '__main__':
         keywords='flask celery redis',
         license=LICENSE,
         long_description=readme(),
+        long_description_content_type='text/markdown',
         name=NAME,
         packages=find_packages(exclude=['tests', 'tests.*']),
-        url='https://github.com/Robpol86/' + NAME,
+        url='https://github.com/Salamek/' + NAME,
         version=VERSION,
         zip_safe=False,
     )

@@ -1,10 +1,10 @@
-pkgname=python-flask-celery-helper
+pkgname=python-flask-celery-tools
 pkgver=1.2.4
 pkgdesc="Celery support for Flask without breaking PyCharm inspections."
 pkgrel=1
 arch=('any')
 license=('MIT')
-url='https://github.com/Salamek/Flask-Celery-Helper'
+url='https://github.com/Salamek/Flask-Celery-Tools'
 makedepends=('python-setuptools')
 depends=(
     'python-celery'

@@ -1,7 +1,9 @@
 """Test single-instance lock timeout."""
 
 import time
+
 import pytest
+
 from flask_celery.exceptions import OtherInstanceError
 from flask_celery.lock_manager import LockManager
 from tests.instances import celery
@@ -21,7 +23,7 @@ def test_instances(task_name, timeout):
         manager_instance.append(self)
         return original_exit(self, *_)
     setattr(LockManager, '__exit__', new_exit)
-    task.apply_async(args=(4, 4)).get()
+    task.apply_async(args=(4, 4)).get(disable_sync_subtasks=False)
     setattr(LockManager, '__exit__', original_exit)
     assert timeout == manager_instance[0].timeout
 
@@ -44,7 +46,7 @@ def test_settings(key, value):
 
     for task_name, timeout in tasks:
         task = celery.tasks[task_name]
-        task.apply_async(args=(4, 4)).get()
+        task.apply_async(args=(4, 4)).get(disable_sync_subtasks=False)
         assert timeout == manager_instance.pop().timeout
     setattr(LockManager, '__exit__', original_exit)
 
@@ -64,14 +66,14 @@ def test_expired():
     setattr(LockManager, '__exit__', new_exit)
 
     # Run the task and don't remove the lock after a successful run.
-    assert 8 == task.apply_async(args=(4, 4)).get()
+    assert 8 == task.apply_async(args=(4, 4)).get(disable_sync_subtasks=False)
     setattr(LockManager, '__exit__', original_exit)
 
     # Run again, lock is still active so this should fail.
     with pytest.raises(OtherInstanceError):
-        task.apply_async(args=(4, 4)).get()
+        task.apply_async(args=(4, 4)).get(disable_sync_subtasks=False)
 
     # Wait 5 seconds (per CELERYD_TASK_TIME_LIMIT), then re-run, should work.
     time.sleep(5)
-    assert 8 == task.apply_async(args=(4, 4)).get()
+    assert 8 == task.apply_async(args=(4, 4)).get(disable_sync_subtasks=False)
     celery.conf.update({'CELERYD_TASK_TIME_LIMIT': None})

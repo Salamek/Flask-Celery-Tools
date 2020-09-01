@@ -3,7 +3,7 @@
 from logging import getLogger
 
 
-class LockBackend(object):
+class LockBackend:
     """Abstract class for implementation of LockBackend."""
 
     def __init__(self, task_lock_backend_uri):

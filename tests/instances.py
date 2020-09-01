@@ -74,7 +74,7 @@ def generate_context(config):
     flask_app = Flask(__name__)
     flask_app.config.update(config)
     flask_app.config['TESTING'] = True
-    flask_app.config['CELERY_ACCEPT_CONTENT'] = ['pickle']
+    flask_app.config['CELERY_ACCEPT_CONTENT'] = ['pickle', 'json']
 
     if 'SQLALCHEMY_DATABASE_URI' in flask_app.config:
         db = SQLAlchemy(flask_app)
@@ -104,34 +104,34 @@ app, celery = get_flask_celery_apps()
 
 @celery.task(bind=True)
 @single_instance
-def add(x, y):
+def add(self, x, y):
     """Celery task: add numbers."""
     return x + y
 
 
 @celery.task(bind=True)
 @single_instance(include_args=True, lock_timeout=20)
-def mul(x, y):
+def mul(self, x, y):
     """Celery task: multiply numbers."""
     return x * y
 
 
 @celery.task(bind=True)
 @single_instance()
-def sub(x, y):
+def sub(self, x, y):
     """Celery task: subtract numbers."""
     return x - y
 
 
 @celery.task(bind=True, time_limit=70)
 @single_instance
-def add2(x, y):
+def add2(self, x, y):
     """Celery task: add numbers."""
     return x + y
 
 
 @celery.task(bind=True, soft_time_limit=80)
 @single_instance
-def add3(x, y):
+def add3(self, x, y):
     """Celery task: add numbers."""
     return x + y

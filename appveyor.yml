@@ -24,10 +24,6 @@ environment:
       BROKER: rabbit
       RESULT: redis
       LOCK: redis
-    - TOX_ENV: py27
-      BROKER: rabbit
-      RESULT: redis
-      LOCK: redis
     - TOX_ENV: py
       PYTHON: Python34-x64
       BROKER: rabbit
@@ -35,11 +31,6 @@ environment:
       LOCK: redis
     - TOX_ENV: py
       PYTHON: Python36-x64
-      BROKER: rabbit
-      RESULT: redis
-      LOCK: redis
-    - TOX_ENV: py
-      PYTHON: Python27-x64
       BROKER: rabbit
       RESULT: redis
       LOCK: redis
@@ -56,10 +47,6 @@ environment:
       BROKER: rabbit
       RESULT: redis
       LOCK: filesystem
-    - TOX_ENV: py27
-      BROKER: rabbit
-      RESULT: redis
-      LOCK: filesystem
     - TOX_ENV: py
       PYTHON: Python34-x64
       BROKER: rabbit
@@ -70,12 +57,6 @@ environment:
       BROKER: rabbit
       RESULT: redis
       LOCK: filesystem
-    - TOX_ENV: py
-      PYTHON: Python27-x64
-      BROKER: rabbit
-      RESULT: redis
-      LOCK: filesystem
-
 
     - TOX_ENV: lint
       BROKER: sqlite
@@ -89,10 +70,6 @@ environment:
       BROKER: sqlite
       RESULT: sqlite
       LOCK: sqlite
-    - TOX_ENV: py27
-      BROKER: sqlite
-      RESULT: sqlite
-      LOCK: sqlite
     - TOX_ENV: py
       PYTHON: Python34-x64
       BROKER: sqlite
@@ -100,11 +77,6 @@ environment:
       LOCK: sqlite
     - TOX_ENV: py
       PYTHON: Python36-x64
-      BROKER: sqlite
-      RESULT: sqlite
-      LOCK: sqlite
-    - TOX_ENV: py
-      PYTHON: Python27-x64
       BROKER: sqlite
       RESULT: sqlite
       LOCK: sqlite
@@ -121,10 +93,6 @@ environment:
       BROKER: mysql
       RESULT: mysql
       LOCK: mysql
-    - TOX_ENV: py27
-      BROKER: mysql
-      RESULT: mysql
-      LOCK: mysql
     - TOX_ENV: py
       PYTHON: Python34-x64
       BROKER: mysql
@@ -132,11 +100,6 @@ environment:
       LOCK: mysql
     - TOX_ENV: py
       PYTHON: Python36-x64
-      BROKER: mysql
-      RESULT: mysql
-      LOCK: mysql
-    - TOX_ENV: py
-      PYTHON: Python27-x64
       BROKER: mysql
       RESULT: mysql
       LOCK: mysql
@@ -153,10 +116,6 @@ environment:
       BROKER: postgres
       RESULT: postgres
       LOCK: postgres
-    - TOX_ENV: py27
-      BROKER: postgres
-      RESULT: postgres
-      LOCK: postgres
     - TOX_ENV: py
       PYTHON: Python34-x64
       BROKER: postgres
@@ -164,11 +123,6 @@ environment:
       LOCK: postgres
     - TOX_ENV: py
       PYTHON: Python36-x64
-      BROKER: postgres
-      RESULT: postgres
-      LOCK: postgres
-    - TOX_ENV: py
-      PYTHON: Python27-x64
       BROKER: postgres
       RESULT: postgres
       LOCK: postgres
@@ -182,10 +136,6 @@ environment:
       RESULT: redis
       LOCK: redis
     - TOX_ENV: py36
-      BROKER: redis
-      RESULT: redis
-      LOCK: redis
-    - TOX_ENV: py27
       BROKER: redis
       RESULT: redis
       LOCK: redis

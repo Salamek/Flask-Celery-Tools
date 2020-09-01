@@ -5,10 +5,10 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
 
-LOCK_MODEL_BASE = declarative_base()
+LockModelBase = declarative_base()
 
 
-class SessionManager(object):
+class SessionManager:
     """Manage SQLAlchemy sessions."""
 
     def __init__(self):
@@ -43,7 +43,7 @@ class SessionManager(object):
         :return: None
         """
         if not self.prepared:
-            LOCK_MODEL_BASE.metadata.create_all(engine)
+            LockModelBase.metadata.create_all(engine)
             self.prepared = True
 
     def session_factory(self, dburi):

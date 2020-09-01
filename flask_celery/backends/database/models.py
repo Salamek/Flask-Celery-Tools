@@ -1,11 +1,13 @@
 """SQLALchemy models."""
 
 from datetime import datetime
+
 import sqlalchemy as sa
-from flask_celery.backends.database.sessions import LOCK_MODEL_BASE
+
+from flask_celery.backends.database.sessions import LockModelBase
 
 
-class Lock(LOCK_MODEL_BASE):
+class Lock(LockModelBase):
     """Model defying table in sqlalchemy database."""
 
     __tablename__ = 'celeryd_lock'

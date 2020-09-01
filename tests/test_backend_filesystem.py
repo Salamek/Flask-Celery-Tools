@@ -3,7 +3,9 @@
 import os
 import posixpath
 import tempfile
+
 import pytest
+
 from flask_celery.backends.filesystem import LockBackendFilesystem
 
 

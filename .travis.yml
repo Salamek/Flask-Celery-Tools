@@ -4,7 +4,7 @@ python:
   - 3.6
   - 3.4
   - pypy
-  - 2.7
+  - 3.8
 services:
   - redis-server
   - rabbitmq
@@ -36,15 +36,3 @@ script: tox -e ${TOX_ENV:-py}
 after_success:
   - bash <(curl -s https://codecov.io/bash)
 
-# Deploy.
-deploy:
-  provider: pypi
-  user: Robpol86
-  password:
-    secure:
-      "liwn5bHqjAtW+gRX6r4VgWuc44OUwfGSne4fTxb6G2pnPNW/IneVspQ2bFXeuQDdXzyLoOe\
-      bKa8bxjRurUEHedjV9UG9fVZwVsWU981aWOxeEl+6kLkpJ2fE9UVeK7T1O+RzzhkWhHq2/YL\
-      4BjBqzOLuBSAGnXZAnwH55Z6HY2g="
-  on:
-    condition: $TRAVIS_PYTHON_VERSION = 3.6
-    tags: true

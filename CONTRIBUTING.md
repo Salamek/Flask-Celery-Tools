@@ -8,8 +8,8 @@ You may follow these steps if you wish to create a pull request. Fork the repo a
 in the project's directory:
 
 ```bash
-virtualenv env  # Create a virtualenv for the project's dependencies.
-source env/bin/activate  # Activate the virtualenv.
+virtualenv venv  # Create a virtualenv for the project's dependencies.
+source venv/bin/activate  # Activate the virtualenv.
 pip install tox  # Install tox, which runs linting and tests.
 tox  # This runs all tests on your local machine. Make sure they pass.
 ```

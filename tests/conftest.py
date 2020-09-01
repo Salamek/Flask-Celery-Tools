@@ -16,7 +16,7 @@ class Worker(threading.Thread):
 
     def run(self):
         """Run the thread."""
-        celery_args = ['-C', '-q', '-c', '1', '-P', 'solo', '--without-gossip']
+        celery_args = ['-C', '-q', '--pool=solo', '--without-gossip', '--concurrency=1']
         with app.app_context():
             celery.worker_main(celery_args)
 

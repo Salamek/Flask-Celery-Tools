@@ -1,6 +1,7 @@
 """Lock manager."""
 import hashlib
 from logging import getLogger
+
 from flask_celery.backends.database import LockBackendDb
 from flask_celery.backends.filesystem import LockBackendFilesystem
 from flask_celery.backends.redis import LockBackendRedis
@@ -33,7 +34,7 @@ def select_lock_backend(task_lock_backend):
     return lock_manager
 
 
-class LockManager(object):
+class LockManager:
     """Lock manager."""
 
     def __init__(self, lock_backend, celery_self, timeout, include_args, args, kwargs):
@@ -70,8 +71,8 @@ class LockManager(object):
         if not self.lock_backend.acquire(self.task_identifier, self.timeout):
             self.log.debug('Another instance is running.')
             raise OtherInstanceError('Failed to acquire lock, {0} already running.'.format(self.task_identifier))
-        else:
-            self.log.debug('Got lock, running.')
+
+        self.log.debug('Got lock, running.')
 
     def __exit__(self, exc_type, *_):
         """Release lock."""

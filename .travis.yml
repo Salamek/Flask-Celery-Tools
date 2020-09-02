@@ -8,6 +8,8 @@ python:
 services:
   - redis-server
   - rabbitmq
+  - mysql
+  - postgresql
 sudo: false
 
 # Environment and matrix.

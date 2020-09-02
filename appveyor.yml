@@ -149,11 +149,6 @@ environment:
       BROKER: redis
       RESULT: redis
       LOCK: redis
-    - TOX_ENV: py
-      PYTHON: Python27-x64
-      BROKER: redis
-      RESULT: redis
-      LOCK: redis
 
 # Run.
 build_script: pip install tox

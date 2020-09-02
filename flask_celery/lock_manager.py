@@ -1,16 +1,12 @@
 """Lock manager."""
 import hashlib
 from logging import getLogger
+from urllib.parse import urlparse
 
 from flask_celery.backends.database import LockBackendDb
 from flask_celery.backends.filesystem import LockBackendFilesystem
 from flask_celery.backends.redis import LockBackendRedis
 from flask_celery.exceptions import OtherInstanceError
-
-try:
-    from urllib.parse import urlparse
-except ImportError:
-    from urlparse import urlparse
 
 
 def select_lock_backend(task_lock_backend):

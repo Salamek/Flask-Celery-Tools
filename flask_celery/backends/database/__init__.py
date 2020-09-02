@@ -13,7 +13,7 @@ from flask_celery.backends.database.sessions import SessionManager
 class LockBackendDb(LockBackend):
     """Lock backend implemented on SQLAlchemy supporting multiple databases."""
 
-    def __init__(self, task_lock_backend_uri):
+    def __init__(self, task_lock_backend_uri: str):
         """
         Constructor.
 
@@ -22,7 +22,7 @@ class LockBackendDb(LockBackend):
         super().__init__(task_lock_backend_uri)
         self.task_lock_backend_uri = task_lock_backend_uri
 
-    def result_session(self, session_manager=SessionManager()):
+    def result_session(self, session_manager: SessionManager = SessionManager()):
         """
         Return session.
 
@@ -33,7 +33,7 @@ class LockBackendDb(LockBackend):
 
     @staticmethod
     @contextmanager
-    def session_cleanup(session):
+    def session_cleanup(session) -> None:
         """
         Cleanup session.
 
@@ -48,7 +48,7 @@ class LockBackendDb(LockBackend):
         finally:
             session.close()
 
-    def acquire(self, task_identifier, timeout):
+    def acquire(self, task_identifier: str, timeout: int) -> bool:
         """
         Acquire lock.
 
@@ -80,7 +80,7 @@ class LockBackendDb(LockBackend):
                 session.rollback()  # pylint: disable=no-member
                 raise
 
-    def release(self, task_identifier):
+    def release(self, task_identifier: str) -> None:
         """
         Release lock.
 
@@ -92,7 +92,7 @@ class LockBackendDb(LockBackend):
             session.query(Lock).filter(Lock.task_identifier == task_identifier).delete()  # pylint: disable=no-member
             session.commit()  # pylint: disable=no-member
 
-    def exists(self, task_identifier, timeout):
+    def exists(self, task_identifier: str, timeout: int) -> bool:
         """
         Check if lock exists and is valid.
 

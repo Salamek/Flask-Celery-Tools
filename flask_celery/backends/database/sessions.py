@@ -16,26 +16,26 @@ class SessionManager:
         self.prepared = False
 
     @staticmethod
-    def get_engine(dburi):
+    def get_engine(db_uri: str):
         """
         Create engine.
 
-        :param dburi: dburi
+        :param db_uri: dburi
         :return: engine
         """
-        return create_engine(dburi, poolclass=NullPool)
+        return create_engine(db_uri, poolclass=NullPool)
 
-    def create_session(self, dburi):
+    def create_session(self, db_uri: str):
         """
         Create session.
 
-        :param dburi: dburi
+        :param db_uri: dburi
         :return: session
         """
-        engine = self.get_engine(dburi)
+        engine = self.get_engine(db_uri)
         return engine, sessionmaker(bind=engine)
 
-    def prepare_models(self, engine):
+    def prepare_models(self, engine) -> None:
         """
         Prepare models (create tables).
 
@@ -46,13 +46,13 @@ class SessionManager:
             LockModelBase.metadata.create_all(engine)
             self.prepared = True
 
-    def session_factory(self, dburi):
+    def session_factory(self, db_uri):
         """
         Session factory.
 
-        :param dburi: dburi
+        :param db_uri: dburi
         :return: engine, session
         """
-        engine, session = self.create_session(dburi)
+        engine, session = self.create_session(db_uri)
         self.prepare_models(engine)
         return session()

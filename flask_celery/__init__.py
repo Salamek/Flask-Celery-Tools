@@ -73,6 +73,10 @@ class Celery(CeleryClass):
             temp_path = os.path.join(tempfile.gettempdir(), 'celery_lock')
 
             app.config['CELERY_TASK_LOCK_BACKEND'] = 'file://{}'.format(temp_path)
+            self.log.warning(
+                'No CELERY_TASK_LOCK_BACKEND has been configured, using filesystem locking as fallback, filesystem'
+                ' locking have some limitations, read '
+                'https://github.com/Salamek/Flask-Celery-Tools/blob/master/README.md#filesystem for more info')
         # Instantiate lock backend
         lock_backend_class = select_lock_backend(app.config.get('CELERY_TASK_LOCK_BACKEND'))
         self.lock_backend = lock_backend_class(app.config.get('CELERY_TASK_LOCK_BACKEND'))

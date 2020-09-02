@@ -17,7 +17,7 @@ class Lock(LockModelBase):
     task_identifier = sa.Column(sa.String(155), unique=True)
     created = sa.Column(sa.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=True)
 
-    def __init__(self, task_identifier):
+    def __init__(self, task_identifier: str):
         """
         Constructor.
 

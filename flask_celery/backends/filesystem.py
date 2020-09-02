@@ -13,15 +13,13 @@ class LockBackendFilesystem(LockBackend):
 
     LOCK_NAME = '{}.lock'
 
-    def __init__(self, task_lock_backend_uri):
+    def __init__(self, task_lock_backend_uri: str):
         """
         Constructor.
 
         :param task_lock_backend_uri: URI
         """
         super().__init__(task_lock_backend_uri)
-        self.log.warning('You are using filesystem locking backend which is good only for development env or for single'
-                         ' task producer setup !')
         parsed_backend_uri = urlparse(task_lock_backend_uri)
         self.path = parsed_backend_uri.path
         try:
@@ -32,7 +30,7 @@ class LockBackendFilesystem(LockBackend):
             else:
                 raise
 
-    def get_lock_path(self, task_identifier):
+    def get_lock_path(self, task_identifier: str) -> str:
         """
         Return path to lock by task identifier.
 
@@ -41,7 +39,7 @@ class LockBackendFilesystem(LockBackend):
         """
         return os.path.join(self.path, self.LOCK_NAME.format(task_identifier))
 
-    def acquire(self, task_identifier, timeout):
+    def acquire(self, task_identifier: str, timeout: int) -> bool:
         """
         Acquire lock.
 
@@ -65,7 +63,7 @@ class LockBackendFilesystem(LockBackend):
                 file_write.write(str(int(time.time())))
             return True
 
-    def release(self, task_identifier):
+    def release(self, task_identifier: str) -> None:
         """
         Release lock.
 
@@ -79,7 +77,7 @@ class LockBackendFilesystem(LockBackend):
             if exception.errno != errno.ENOENT:
                 raise
 
-    def exists(self, task_identifier, timeout):
+    def exists(self, task_identifier: str, timeout: int) -> bool:
         """
         Check if lock exists and is valid.
 

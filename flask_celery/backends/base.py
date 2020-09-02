@@ -6,7 +6,7 @@ from logging import getLogger
 class LockBackend:
     """Abstract class for implementation of LockBackend."""
 
-    def __init__(self, task_lock_backend_uri):
+    def __init__(self, task_lock_backend_uri: str):
         """
         Constructor.
 
@@ -15,7 +15,7 @@ class LockBackend:
         self.task_lock_backend_uri = task_lock_backend_uri
         self.log = getLogger('{}'.format(self.__class__.__name__))
 
-    def acquire(self, task_identifier, timeout):
+    def acquire(self, task_identifier: str, timeout: int) -> bool:
         """
         Acquire lock.
 
@@ -25,7 +25,7 @@ class LockBackend:
         """
         raise NotImplementedError
 
-    def release(self, task_identifier):
+    def release(self, task_identifier: str) -> None:
         """
         Release lock.
 
@@ -34,7 +34,7 @@ class LockBackend:
         """
         raise NotImplementedError
 
-    def exists(self, task_identifier, timeout):
+    def exists(self, task_identifier: str, timeout: int) -> bool:
         """
         Check if lock exists and is valid.
 

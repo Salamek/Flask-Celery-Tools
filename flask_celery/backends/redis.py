@@ -50,4 +50,4 @@ class LockBackendRedis(LockBackend):
         :return: bool
         """
         redis_key = self.CELERY_LOCK.format(task_id=task_identifier)
-        return self.redis_client.exists(redis_key)
+        return self.redis_client.exists(redis_key) == 1

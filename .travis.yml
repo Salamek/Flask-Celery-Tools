@@ -2,7 +2,7 @@
 language: python
 python:
   - 3.6
-  - 3.4
+  - 3.7
   - pypy
   - 3.8
 services:

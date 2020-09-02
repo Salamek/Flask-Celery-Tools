@@ -56,7 +56,7 @@ def app_config():
     elif 'redis_sock' in all_env_variables:
         # Since experts @redis decided to drop redis+socket:// schema a replace it with unix://
         # i now cant detect redis correctly so i must use old schema
-        config['REDIS_URL'] = backends['redis_sock'].replace('redis+socket://', 'unix://')
+        config['REDIS_URL'] = backends['redis_sock']
 
     if os.environ.get('RESULT') in ['mysql', 'postgres', 'sqlite']:
         config['CELERY_RESULT_BACKEND'] = 'db+' + config['CELERY_RESULT_BACKEND']

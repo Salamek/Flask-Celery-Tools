@@ -17,7 +17,7 @@ class LockBackendRedis(LockBackend):
         :param task_lock_backend_uri: URI
         """
         super().__init__(task_lock_backend_uri)
-        self.redis_client = redis.StrictRedis.from_url(task_lock_backend_uri)
+        self.redis_client = redis.StrictRedis.from_url(task_lock_backend_uri.replace('redis+socket://', 'unix://'))
 
     def acquire(self, task_identifier: str, timeout: int) -> bool:
         """

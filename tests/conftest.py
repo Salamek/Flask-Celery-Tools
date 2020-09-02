@@ -19,7 +19,7 @@ def app_config():
     :return: Flask config to be fed into app.config.update().
     :rtype: dict
     """
-    config = dict()
+    config = {}
 
     all_env_variables = [
         os.environ.get('BROKER'),
@@ -54,7 +54,9 @@ def app_config():
     if 'redis' in all_env_variables:
         config['REDIS_URL'] = backends['redis']
     elif 'redis_sock' in all_env_variables:
-        config['REDIS_URL'] = backends['redis_sock']
+        # Since experts @redis decided to drop redis+socket:// schema a replace it with unix://
+        # i now cant detect redis correctly so i must use old schema
+        config['REDIS_URL'] = backends['redis_sock'].replace('redis+socket://', 'unix://')
 
     if os.environ.get('RESULT') in ['mysql', 'postgres', 'sqlite']:
         config['CELERY_RESULT_BACKEND'] = 'db+' + config['CELERY_RESULT_BACKEND']

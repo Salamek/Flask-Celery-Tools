@@ -16,8 +16,8 @@ setup_redis_sock () {
 }
 
 setup_rabbit_vhost () {
-    rabbitmqctl add_vhost travis_vhost_${TRAVIS_JOB_ID}
-    rabbitmqctl set_permissions -p travis_vhost_${TRAVIS_JOB_ID} guest ".*" ".*" ".*"
+    sudo rabbitmqctl add_vhost travis_vhost_${TRAVIS_JOB_ID}
+    sudo rabbitmqctl set_permissions -p travis_vhost_${TRAVIS_JOB_ID} guest ".*" ".*" ".*"
 }
 
 if [ "$BROKER" == mysql ] || [ "$RESULT" == mysql ] || [ "$LOCK" == mysql ]; then

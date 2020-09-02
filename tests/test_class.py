@@ -3,7 +3,6 @@
 import pytest
 
 from flask_celery import Celery
-from tests.instances import app
 
 
 class FakeApp(object):
@@ -22,12 +21,12 @@ class FakeApp(object):
         pass
 
 
-def test_multiple():
+def test_multiple(flask_app):
     """Test attempted re-initialization of extension."""
-    assert 'celery' in app.extensions
+    assert 'celery' in flask_app.extensions
 
     with pytest.raises(ValueError):
-        Celery(app)
+        Celery(flask_app)
 
 
 def test_one_dumb_line():

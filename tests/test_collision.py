@@ -1,52 +1,43 @@
-"""Test single-instance collision."""
+"""Collision tests."""
 
 import pytest
 
 from flask_celery.exceptions import OtherInstanceError
 from flask_celery.lock_manager import LockManager
-from tests.instances import celery
-
-PARAMS = [('tests.instances.add', 8), ('tests.instances.mul', 16), ('tests.instances.sub', 0)]
+from .tasks import add, mul, sub
 
 
-#  def test_wth():
-#    """Test wth is going on."""
-#    task = celery.tasks['tests.instances.add']
-#    task_running = task.apply_async(args=(4, 4))
-#    print(task_running.wait(1))
+PARAMS = [(add, 8), (mul, 16), (sub, 0)]
 
 
-@pytest.mark.parametrize('task_name,expected', PARAMS)
-def test_basic(task_name, expected):
+@pytest.mark.parametrize('task,expected', PARAMS)
+def test_basic(task, expected, celery_app, celery_worker):
     """Test no collision."""
-    task = celery.tasks[task_name]
-    assert expected == task.apply_async(args=(4, 4)).get(disable_sync_subtasks=False)
+    assert expected == task.apply_async(args=(4, 4)).get()
 
 
-@pytest.mark.parametrize('task_name,expected', PARAMS)
-def test_collision(task_name, expected):
+@pytest.mark.parametrize('task,expected', PARAMS)
+def test_collision(task, expected, celery_app, celery_worker):
     """Test single-instance collision."""
     manager_instance = list()
-    task = celery.tasks[task_name]
 
     # First run the task and prevent it from removing the lock.
     def new_exit(self, *_):
-        print('EXIT CALLED')
         manager_instance.append(self)
         return None
     original_exit = LockManager.__exit__
     setattr(LockManager, '__exit__', new_exit)
-    assert expected == task.apply_async(args=(4, 4)).get(disable_sync_subtasks=False)
+    assert expected == task.apply_async(args=(4, 4)).get()
     setattr(LockManager, '__exit__', original_exit)
     assert manager_instance[0].is_already_running is True
 
     # Now run it again.
     with pytest.raises(OtherInstanceError) as e:
-        task.apply_async(args=(4, 4)).get(disable_sync_subtasks=False)
+        task.apply_async(args=(4, 4)).get()
     if manager_instance[0].include_args:
-        assert str(e.value).startswith('Failed to acquire lock, {0}.args.'.format(task_name))
+        assert str(e.value).startswith('Failed to acquire lock, {0}.args.'.format(task.name))
     else:
-        assert 'Failed to acquire lock, {0} already running.'.format(task_name) == str(e.value)
+        assert 'Failed to acquire lock, {0} already running.'.format(task.name) == str(e.value)
     assert manager_instance[0].is_already_running is True
 
     # Clean up.
@@ -54,13 +45,13 @@ def test_collision(task_name, expected):
     assert manager_instance[0].is_already_running is False
 
     # Once more.
-    assert expected == task.apply_async(args=(4, 4)).get(disable_sync_subtasks=False)
+    assert expected == task.apply_async(args=(4, 4)).get()
 
 
-def test_include_args():
+def test_include_args(celery_app, celery_worker):
     """Test single-instance collision with task arguments taken into account."""
     manager_instance = list()
-    task = celery.tasks['tests.instances.mul']
+    task = mul
 
     # First run the tasks and prevent them from removing the locks.
     def new_exit(self, *_):  # noqa: D401
@@ -69,20 +60,20 @@ def test_include_args():
         return None
     original_exit = LockManager.__exit__
     setattr(LockManager, '__exit__', new_exit)
-    assert 16 == task.apply_async(args=(4, 4)).get(disable_sync_subtasks=False)
-    assert 20 == task.apply_async(args=(5, 4)).get(disable_sync_subtasks=False)
+    assert 16 == task.apply_async(args=(4, 4)).get()
+    assert 20 == task.apply_async(args=(5, 4)).get()
     setattr(LockManager, '__exit__', original_exit)
     assert manager_instance[0].is_already_running is True
     assert manager_instance[1].is_already_running is True
 
     # Now run them again.
     with pytest.raises(OtherInstanceError) as e:
-        task.apply_async(args=(4, 4)).get(disable_sync_subtasks=False)
-    assert str(e.value).startswith('Failed to acquire lock, tests.instances.mul.args.')
+        task.apply_async(args=(4, 4)).get()
+    assert str(e.value).startswith('Failed to acquire lock, tests.tasks.mul.args.')
     assert manager_instance[0].is_already_running is True
     with pytest.raises(OtherInstanceError) as e:
-        task.apply_async(args=(5, 4)).get(disable_sync_subtasks=False)
-    assert str(e.value).startswith('Failed to acquire lock, tests.instances.mul.args.')
+        task.apply_async(args=(5, 4)).get()
+    assert str(e.value).startswith('Failed to acquire lock, tests.tasks.mul.args.')
     assert manager_instance[1].is_already_running is True
 
     # Clean up.
@@ -92,5 +83,5 @@ def test_include_args():
     assert manager_instance[1].is_already_running is False
 
     # Once more.
-    assert 16 == task.apply_async(args=(4, 4)).get(disable_sync_subtasks=False)
-    assert 20 == task.apply_async(args=(5, 4)).get(disable_sync_subtasks=False)
+    assert 16 == task.apply_async(args=(4, 4)).get()
+    assert 20 == task.apply_async(args=(5, 4)).get()

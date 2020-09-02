@@ -136,6 +136,25 @@ if __name__ == '__main__':
     else:
         print(results2)  # Should not happen.
 ```
+
+### Locking backends
+
+Flask-Celery-Tools supports multiple locking backends you can use:
+
+#### Filesystem
+
+Filesystem locking backend is using file locks on filesystem where worker is running, WARNING this backend is not usable for distributed tasks!!!
+
+#### Redis
+
+Redis backend is using redis for storing task locks, this backend is good for distributed tasks.
+
+
+#### Database (MariaDB, PostgreSQL, etc)
+
+Database backend is using database supported by SqlAlchemy to store task locks, this backend is good for distributed tasks. Except sqlite database that have same limitations as filesystem backend.
+
+
 ## Changelog
 
 This project adheres to [Semantic Versioning](http://semver.org/).

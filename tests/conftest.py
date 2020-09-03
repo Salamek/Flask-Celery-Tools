@@ -10,9 +10,14 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_celery import Celery
 
 
-def get_rabbit_vhost():
+def get_rabbit_vhost() -> str:
     """Return travis vhost name."""
-    return 'travis_vhost_{}'.format(os.environ.get('TRAVIS_JOB_ID', 'X'))
+
+    travis_job_id = os.environ.get('TRAVIS_JOB_ID')
+    if travis_job_id:
+        return 'travis_vhost_{}'.format(travis_job_id)
+
+    return '/'
 
 
 @pytest.fixture()

@@ -12,7 +12,6 @@ from flask_celery import Celery
 
 def get_rabbit_vhost() -> str:
     """Return travis vhost name."""
-
     travis_job_id = os.environ.get('TRAVIS_JOB_ID')
     if travis_job_id:
         return 'travis_vhost_{}'.format(travis_job_id)

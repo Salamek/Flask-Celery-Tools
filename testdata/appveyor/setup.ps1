@@ -16,8 +16,6 @@ if ($params -contains 'postgres')
 if ($params -contains 'redis')
 {
     cinst redis-64
-    redis-server --service-install
-    redis-server --service-start
 }
 
 if ($params -contains 'rabbit')

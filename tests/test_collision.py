@@ -34,6 +34,7 @@ def test_collision(task, expected, celery_app, celery_worker):
     # Now run it again.
     with pytest.raises(OtherInstanceError) as e:
         task.apply_async(args=(4, 4)).get()
+
     if manager_instance[0].include_args:
         assert str(e.value).startswith('Failed to acquire lock, {0}.args.'.format(task.name))
     else:

@@ -19,7 +19,7 @@ def get_rabbit_vhost() -> str:
     return '/'
 
 
-@pytest.fixture()
+@pytest.fixture(scope='session')
 def app_config():
     """Generate a Flask config dict with settings for a specific broker based on an environment variable.
 
@@ -78,7 +78,7 @@ def app_config():
     return config
 
 
-@pytest.fixture()
+@pytest.fixture(scope='session')
 def celery_app(flask_app):
     """Create celery app.
 
@@ -87,7 +87,7 @@ def celery_app(flask_app):
     return flask_app.extensions['celery'].celery
 
 
-@pytest.fixture()
+@pytest.fixture(scope='session')
 def flask_app(app_config):
     """Create the Flask app context and initializes any extensions such as Celery, Redis, SQLAlchemy, etc.
 
@@ -95,17 +95,18 @@ def flask_app(app_config):
 
     :return: The Flask app instance.
     """
-    flask_app = Flask(__name__)
-    flask_app.config.update(app_config)
-    flask_app.config['TESTING'] = True
-    flask_app.config['CELERY_ACCEPT_CONTENT'] = ['pickle', 'json']
+    app = Flask(__name__)
+    app.config.update(app_config)
+    app.config['TESTING'] = True
+    app.config['BROKER_HEARTBEAT'] = 0
+    app.config['CELERY_ACCEPT_CONTENT'] = ['pickle', 'json']
 
-    if 'SQLALCHEMY_DATABASE_URI' in flask_app.config:
-        db = SQLAlchemy(flask_app)
+    if 'SQLALCHEMY_DATABASE_URI' in app.config:
+        db = SQLAlchemy(app)
         db.engine.execute('DROP TABLE IF EXISTS celery_tasksetmeta;')
-    elif 'REDIS_URL' in flask_app.config:
-        redis = Redis(flask_app)
+    elif 'REDIS_URL' in app.config:
+        redis = Redis(app)
         redis.flushdb()
 
-    Celery(flask_app)
-    return flask_app
+    Celery(app)
+    return app

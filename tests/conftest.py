@@ -10,15 +10,6 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_celery import Celery
 
 
-def get_rabbit_vhost() -> str:
-    """Return travis vhost name."""
-    travis_job_id = os.environ.get('TRAVIS_JOB_ID')
-    if travis_job_id:
-        return 'travis_vhost_{}'.format(travis_job_id)
-
-    return '/'
-
-
 @pytest.fixture(scope='session')
 def app_config():
     """Generate a Flask config dict with settings for a specific broker based on an environment variable.
@@ -41,7 +32,7 @@ def app_config():
             raise Exception('All required env variables must be set!')
 
     backends = {
-        'rabbit': 'amqp://guest:guest@localhost:5672/{}'.format(get_rabbit_vhost()),
+        'rabbit': 'amqp://guest:guest@localhost:5672//',
         'redis': 'redis://localhost/1',
         'redis_sock': 'redis+socket:///tmp/redis.sock',
         'filesystem': 'file:///tmp/celery_lock',

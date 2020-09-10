@@ -15,11 +15,6 @@ setup_redis_sock () {
     echo -e "daemonize yes\\nunixsocket /tmp/redis.sock\\nport 0" |redis-server -
 }
 
-setup_rabbit_vhost () {
-    sudo rabbitmqctl add_vhost travis_vhost_${TRAVIS_JOB_ID}
-    sudo rabbitmqctl set_permissions -p travis_vhost_${TRAVIS_JOB_ID} guest ".*" ".*" ".*"
-}
-
 if [ "$BROKER" == mysql ] || [ "$RESULT" == mysql ] || [ "$LOCK" == mysql ]; then
     setup_mysql
 fi
@@ -30,8 +25,4 @@ fi
 
 if [[ "$BROKER" == redis_sock* ]] || [[ "$RESULT" == redis_sock* ]] || [[ "$LOCK" == redis_sock* ]]; then
     setup_redis_sock
-fi
-
-if [[ "$BROKER" == rabbit ]] || [[ "$RESULT" == rabbit ]] || [[ "$LOCK" == rabbit ]]; then
-    setup_rabbit_vhost
 fi

@@ -160,6 +160,9 @@ Database backend is using database supported by SqlAlchemy to store task locks, 
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 
+1.2.6 - 2020-09-10
+    * Fixed archlinux build
+
 1.2.5 - 2020-09-10
     * Update dependencies
     * Fixed unittests

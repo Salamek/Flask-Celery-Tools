@@ -159,6 +159,11 @@ Database backend is using database supported by SqlAlchemy to store task locks, 
 
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+
+1.2.5 - 2020-09-10
+    * Update dependencies
+    * Fixed unittests
+
 1.2.4 - 2018-11-03
     * Append celery_self if task is bound
 

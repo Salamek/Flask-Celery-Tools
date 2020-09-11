@@ -1,25 +1,6 @@
 stages:
-  #- test
   - package
-  #- packagetest
   - deploy
-
-#test:debian:
-#  stage: test
-#  script:
-#    - apt-get update -qy
-#    - apt-get install python3-setuptools -qy
-#    - python3 setup.py test
-#  tags:
-#    - debian
-
-#test:archlinux:
-#  stage: test
-#  script:
-#    - pacman -Syu python-setuptools --noconfirm
-#    - python setup.py test
-#  tags:
-#    - archlinux
 
 package:debian:
   stage: package
@@ -27,7 +8,6 @@ package:debian:
     - apt-get update -qy
     - apt-get install -y python-all python3-stdeb python3-celery python3-flask python3-redis python3-sqlalchemy
     - rm -rf "./deb_dist"
-    - sed -i -e "s/, 'sqlalchemy'//g" setup.py # Hack
     - python3 setup.py --command-packages=stdeb.command bdist_deb
   tags:
     - debian
@@ -53,31 +33,6 @@ package:archlinux:
       - archlinux/python-flask-celery-tools*
     expire_in: 1d
 
-#packagetest:debian:
-#  stage: packagetest
-#  script:
-#    - apt-get update -qy
-#    - cd deb_dist
-#    - apt install ./*.deb -qy
-#  tags:
-#    - debian
-#  dependencies:
-#    - package:debian
-#  only:
-#    - tags
-
-#packagetest:archlinux:
-#  stage: packagetest
-#  script:
-#    - pacman -Sy
-#    - cd archlinux
-#    - pacman -U python-flask-celery-tools*.pkg.tar.zst --noconfirm
-#  tags:
-#    - archlinux
-#  dependencies:
-#    - package:archlinux
-#  only:
-#    - tags
 
 repoupdate:
   stage: deploy

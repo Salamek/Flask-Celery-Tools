@@ -10,7 +10,7 @@ IMPORT = 'flask_celery'
 INSTALL_REQUIRES = ['flask', 'celery', 'redis', 'sqlalchemy']
 LICENSE = 'MIT'
 NAME = 'Flask-Celery-Tools'
-VERSION = '1.2.6'
+VERSION = '1.2.7'
 
 
 def readme(path='README.md') -> str:

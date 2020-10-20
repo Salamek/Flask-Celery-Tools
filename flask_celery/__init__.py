@@ -51,7 +51,7 @@ class Celery(CeleryClass):
         self.lock_backend = None
         _state._register_app = lambda _: None  # Upon Celery app registration attempt, do nothing.
         super().__init__()
-        if app is not None and hasattr(app, 'name'):
+        if app is not None and hasattr(app, 'import_name'):
             self.init_app(app)
 
     def init_app(self, app):
@@ -59,7 +59,7 @@ class Celery(CeleryClass):
 
         :param app: Flask application instance.
         """
-        self.log = get_logger(app.name)
+        self.log = get_logger(app.import_name)
         _state._register_app = self.original_register_app  # Restore Celery app registration function.
         if not hasattr(app, 'extensions'):
             app.extensions = dict()

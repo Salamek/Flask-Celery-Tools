@@ -5,6 +5,7 @@ import tempfile
 from functools import partial, wraps
 
 from celery import _state, Celery as CeleryClass
+from celery.utils.log import get_logger
 
 from flask_celery.lock_manager import LockManager, select_lock_backend
 
@@ -49,11 +50,13 @@ class Celery(CeleryClass):
         self.original_register_app = _state._register_app  # Backup Celery app registration function.
         self.lock_backend = None
         _state._register_app = lambda _: None  # Upon Celery app registration attempt, do nothing.
+        super().__init__()
+        #if app is not None:
+        #    super().__init__(app.name)
+        #else:
+        #    super().__init__()
         if app is not None:
-            super().__init__(app.name)
-        else:
-            super().__init__()
-        if app is not None:
+            self.log = get_logger(app.name)
             self.init_app(app)
 
     def init_app(self, app):

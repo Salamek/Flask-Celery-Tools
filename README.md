@@ -159,6 +159,10 @@ Database backend is using database supported by SqlAlchemy to store task locks, 
 
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+1.3.0 - 2020-11-03
+------------------
+    * Celery 5 support added
+
 1.2.9 - 2020-11-03
 ------------------
     * Bump celery to version 4.4.7

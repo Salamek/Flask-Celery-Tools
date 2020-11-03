@@ -3,14 +3,26 @@
 
 import os
 import re
+from typing import List
 
 from setuptools import Command, find_packages, setup
 
 IMPORT = 'flask_celery'
-INSTALL_REQUIRES = ['flask', 'celery', 'redis', 'sqlalchemy']
 LICENSE = 'MIT'
 NAME = 'Flask-Celery-Tools'
 VERSION = '1.2.7'
+
+
+def requirements(path='requirements.txt') -> List[str]:
+    """Read requirements.txt file.
+
+    :param str path: Path to requirments.txt file.
+    :return: File lines.
+    :rtype: List[str]
+    """
+    path = os.path.realpath(os.path.join(os.path.dirname(__file__), path))
+    with open(path, 'r') as requirements_handle:
+        return [line.strip() for line in requirements_handle.readlines()]
 
 
 def readme(path='README.md') -> str:
@@ -51,14 +63,14 @@ class CheckVersion(Command):
         if not re.compile(r'^%s - \d{4}-\d{2}-\d{2}[\r\n]' % VERSION, re.MULTILINE).search(readme()):
             raise SystemExit('Version not found in readme/changelog file.')
         # Check tox.
-        if INSTALL_REQUIRES:
-            contents = readme('tox.ini')
-            section = re.compile(r'[\r\n]+install_requires =[\r\n]+(.+?)[\r\n]+\w', re.DOTALL).findall(contents)
-            if not section:
-                raise SystemExit('Missing install_requires section in tox.ini.')
-            in_tox = re.findall(r'    ([^=]+)==[\w\d.-]+', section[0])
-            if INSTALL_REQUIRES != in_tox:
-                raise SystemExit('Missing/unordered pinned dependencies in tox.ini.')
+        requirements_without_version = [re.split(r'(>=|==|<=)', req)[0] for req in requirements()]
+        contents = readme('tox.ini')
+        section = re.compile(r'[\r\n]+install_requires =[\r\n]+(.+?)[\r\n]+\w', re.DOTALL).findall(contents)
+        if not section:
+            raise SystemExit('Missing install_requires section in tox.ini.')
+        in_tox = re.findall(r'    ([^=]+)==[\w\d.-]+', section[0])
+        if requirements_without_version != in_tox:
+            raise SystemExit('Missing/unordered pinned dependencies in tox.ini.')
 
 
 if __name__ == '__main__':
@@ -84,7 +96,7 @@ if __name__ == '__main__':
         ],
         cmdclass=dict(check_version=CheckVersion),
         description='Celery support for Flask without breaking PyCharm inspections.',
-        install_requires=INSTALL_REQUIRES,
+        install_requires=requirements(),
         keywords='flask celery redis',
         license=LICENSE,
         long_description=readme(),

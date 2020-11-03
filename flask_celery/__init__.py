@@ -2,7 +2,6 @@
 
 import os
 import tempfile
-import warnings
 from functools import partial, wraps
 
 from celery import _state, Celery as CeleryClass

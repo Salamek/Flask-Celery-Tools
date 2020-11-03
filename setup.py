@@ -16,7 +16,7 @@ INSTALL_REQUIRES = [
     'sqlalchemy>=1.2.7'
 ]
 NAME = 'Flask-Celery-Tools'
-VERSION = '1.3.0'
+VERSION = '1.3.1'
 
 
 def requirements(path='requirements.txt') -> List[str]:

@@ -12,7 +12,7 @@ This extension also comes with a ``single_instance`` method.
 * Python PyPy, 3.6, 3.7 and 3.8 supported on Linux and OS X.
 * Python 3.6, 3.7 and 3.8 supported on Windows (both 32 and 64 bit versions of Python).
   
-[![Build Status Windows ](https://img.shields.io/appveyor/ci/Salamek/Flask-Celery-Tools/master.svg?style=flat-square&label=AppVeyor%20CI)](https://ci.appveyor.com/project/Salamek/Flask-Celery-Tools) [![Build Status](https://img.shields.io/travis/Salamek/Flask-Celery-Tools/master.svg?style=flat-square&label=Travis%20CI)](https://travis-ci.org/Salamek/Flask-Celery-Tools ) [![Coverage Status](https://img.shields.io/codecov/c/github/Salamek/Flask-Celery-Tools/master.svg?style=flat-square&label=Codecov)](https://codecov.io/gh/Salamek/Flask-Celery-Tools) [![Latest Version ](https://img.shields.io/pypi/v/Flask-Celery-Tools.svg?style=flat-square&label=Latest)](https://pypi.python.org/pypi/Flask-Celery-Tools)
+[![Build Status Windows ](https://img.shields.io/appveyor/ci/Salamek/Flask-Celery-Tools/master.svg?style=flat-square&label=AppVeyor%20CI)](https://ci.appveyor.com/project/Salamek/Flask-Celery-Tools) [![Build Status](https://img.shields.io/travis/Salamek/Flask-Celery-Tools/master.svg?style=flat-square&label=Travis%20CI)](https://travis-ci.com/Salamek/Flask-Celery-Tools ) [![Coverage Status](https://img.shields.io/codecov/c/github/Salamek/Flask-Celery-Tools/master.svg?style=flat-square&label=Codecov)](https://codecov.io/gh/Salamek/Flask-Celery-Tools) [![Latest Version ](https://img.shields.io/pypi/v/Flask-Celery-Tools.svg?style=flat-square&label=Latest)](https://pypi.python.org/pypi/Flask-Celery-Tools)
  
 ## Attribution  
 

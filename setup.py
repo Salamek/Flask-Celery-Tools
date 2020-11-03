@@ -11,7 +11,7 @@ IMPORT = 'flask_celery'
 LICENSE = 'MIT'
 INSTALL_REQUIRES = [
     'flask>=1.1.2',
-    'celery<=4.4.7',
+    'celery<=5.0.2',
     'redis>=3.5.3',
     'sqlalchemy>=1.2.7'
 ]
@@ -111,5 +111,5 @@ if __name__ == '__main__':
         packages=find_packages(exclude=['tests', 'tests.*']),
         url='https://github.com/Salamek/' + NAME,
         version=VERSION,
-        zip_safe=False,
+        zip_safe=False
     )

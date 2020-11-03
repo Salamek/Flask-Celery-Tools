@@ -13,7 +13,7 @@ INSTALL_REQUIRES = [
     'flask>=1.1.2'
     'celery<=4.4.7'
     'redis>=3.5.3'
-    'sqlalchemy>=1.3.19'
+    'sqlalchemy>=1.2.7'
 ]
 NAME = 'Flask-Celery-Tools'
 VERSION = '1.2.7'

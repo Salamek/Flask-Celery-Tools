@@ -9,6 +9,12 @@ from setuptools import Command, find_packages, setup
 
 IMPORT = 'flask_celery'
 LICENSE = 'MIT'
+INSTALL_REQUIRES = [
+    'flask>=1.1.2'
+    'celery<=4.4.7'
+    'redis>=3.5.3'
+    'sqlalchemy>=1.3.19'
+]
 NAME = 'Flask-Celery-Tools'
 VERSION = '1.2.7'
 
@@ -63,7 +69,7 @@ class CheckVersion(Command):
         if not re.compile(r'^%s - \d{4}-\d{2}-\d{2}[\r\n]' % VERSION, re.MULTILINE).search(readme()):
             raise SystemExit('Version not found in readme/changelog file.')
         # Check tox.
-        requirements_without_version = [re.split(r'(>=|==|<=)', req)[0] for req in requirements()]
+        requirements_without_version = [re.split(r'(>=|==|<=)', req)[0] for req in INSTALL_REQUIRES]
         contents = readme('tox.ini')
         section = re.compile(r'[\r\n]+install_requires =[\r\n]+(.+?)[\r\n]+\w', re.DOTALL).findall(contents)
         if not section:
@@ -96,7 +102,7 @@ if __name__ == '__main__':
         ],
         cmdclass=dict(check_version=CheckVersion),
         description='Celery support for Flask without breaking PyCharm inspections.',
-        install_requires=requirements(),
+        install_requires=INSTALL_REQUIRES,
         keywords='flask celery redis',
         license=LICENSE,
         long_description=readme(),

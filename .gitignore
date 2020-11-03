@@ -92,5 +92,6 @@ ENV/
 # Robpol86
 *.rpm
 .idea/
+requirements*.txt
 .DS_Store
 tests/test_database.sqlite

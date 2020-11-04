@@ -10,7 +10,7 @@ from flask_celery.lock_manager import LockManager, select_lock_backend
 
 __author__ = '@Salamek'
 __license__ = 'MIT'
-__version__ = '1.3.1'
+__version__ = '1.4.0'
 
 
 class _CeleryState:
@@ -81,7 +81,12 @@ class Celery(CeleryClass):
         if 'CELERY_RESULT_BACKEND' in app.config:
             self._preconf['CELERY_RESULT_BACKEND'] = app.config['CELERY_RESULT_BACKEND']
 
-        self.conf.update(app.config)
+        celery_config = {}
+        for key, value in app.config.items():
+            if key.startswith('CELERY'):
+                celery_config[key.replace('CELERY_', '').lower()] = value
+
+        self.conf.update(celery_config)
         task_base = self.Task
 
         # Add Flask app context to celery instance.
@@ -123,8 +128,8 @@ def single_instance(func=None, lock_timeout=None, include_args=False):
         # Select the manager and get timeout.
         timeout = (
             lock_timeout or celery_self.soft_time_limit or celery_self.time_limit
-            or celery_self.app.conf.get('CELERYD_TASK_SOFT_TIME_LIMIT')
-            or celery_self.app.conf.get('CELERYD_TASK_TIME_LIMIT')
+            or celery_self.app.conf.get('task_soft_time_limit')
+            or celery_self.app.conf.get('task_time_limit')
             or (60 * 5)
         )
 

@@ -89,7 +89,7 @@ def flask_app(app_config):
     app = Flask(__name__)
     app.config.update(app_config)
     app.config['TESTING'] = True
-    app.config['BROKER_HEARTBEAT'] = 0
+    app.config['CELERY_BROKER_HEARTBEAT'] = 0
     app.config['CELERY_ACCEPT_CONTENT'] = ['pickle', 'json']
 
     if 'SQLALCHEMY_DATABASE_URI' in app.config:

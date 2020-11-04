@@ -27,7 +27,7 @@ def test_instances(task, timeout, celery_app, celery_worker):
     assert timeout == manager_instance[0].timeout
 
 
-@pytest.mark.parametrize('key,value', [('CELERYD_TASK_TIME_LIMIT', 200), ('CELERYD_TASK_SOFT_TIME_LIMIT', 100)])
+@pytest.mark.parametrize('key,value', [('task_time_limit', 200), ('task_soft_time_limit', 100)])
 def test_settings(key, value, celery_app, celery_worker):
     """Test different Celery time limit settings."""
     celery_app.conf.update({key: value})
@@ -45,7 +45,7 @@ def test_settings(key, value, celery_app, celery_worker):
 
     for task, timeout in tasks:
         task.apply_async(args=(4, 4)).get()
-        assert timeout == manager_instance.pop().timeout
+        assert manager_instance.pop().timeout == timeout
     setattr(LockManager, '__exit__', original_exit)
 
     celery_app.conf.update({key: None})
@@ -53,7 +53,7 @@ def test_settings(key, value, celery_app, celery_worker):
 
 def test_expired(celery_app, celery_worker):
     """Test timeout expired task instances."""
-    celery_app.conf.update({'CELERYD_TASK_TIME_LIMIT': 5})
+    celery_app.conf.update({'task_time_limit': 5})
     manager_instance = list()
     task = add
     original_exit = LockManager.__exit__
@@ -74,4 +74,4 @@ def test_expired(celery_app, celery_worker):
     # Wait 5 seconds (per CELERYD_TASK_TIME_LIMIT), then re-run, should work.
     time.sleep(5)
     assert 8 == task.apply_async(args=(4, 4)).get()
-    celery_app.conf.update({'CELERYD_TASK_TIME_LIMIT': None})
+    celery_app.conf.update({'task_time_limit': None})

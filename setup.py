@@ -10,7 +10,7 @@ from setuptools import Command, find_packages, setup
 IMPORT = 'flask_celery'
 LICENSE = 'MIT'
 INSTALL_REQUIRES = [
-    'flask>=1.1.2',
+    'flask>=1.0.2',
     'celery<=5.0.2',
     'redis>=3.5.3',
     'sqlalchemy>=1.2.7'

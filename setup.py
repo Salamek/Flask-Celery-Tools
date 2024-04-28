@@ -11,7 +11,7 @@ IMPORT = 'flask_celery'
 LICENSE = 'MIT'
 INSTALL_REQUIRES = [
     'flask>=1.0.2',
-    'celery<=5.0.2',
+    'celery<=5.3.6',
     'redis>=3.5.3',
     'sqlalchemy>=1.2.7'
 ]

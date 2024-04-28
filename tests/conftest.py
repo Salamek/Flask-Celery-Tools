@@ -93,8 +93,14 @@ def flask_app(app_config):
     app.config['CELERY_ACCEPT_CONTENT'] = ['pickle', 'json']
 
     if 'SQLALCHEMY_DATABASE_URI' in app.config:
-        db = SQLAlchemy(app)
-        db.engine.execute('DROP TABLE IF EXISTS celery_tasksetmeta;')
+        with app.app_context():
+            db = SQLAlchemy(app)
+            sql = 'DROP TABLE IF EXISTS celery_tasksetmeta;'
+            if hasattr(db.engine, 'execute'):
+                db.engine.execute(sql)
+            else:
+                from sqlalchemy import text
+                db.session.execute(text(sql))
     elif 'REDIS_URL' in app.config:
         redis = Redis(app)
         redis.flushdb()

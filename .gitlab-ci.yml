@@ -6,7 +6,7 @@ package:debian:
   stage: package
   script:
     - apt-get update -qy
-    - apt-get install -y  python3-stdeb python3-celery python3-flask python3-redis python3-sqlalchemy
+    - apt-get install -y  python3-stdeb python3-celery python3-flask python3-redis python3-sqlalchemy dh-python
     - rm -rf "./deb_dist"
     - python3 setup.py --command-packages=stdeb.command bdist_deb
   tags:

@@ -6,7 +6,7 @@ package:debian:
   stage: package
   script:
     - apt-get update -qy
-    - apt-get install -y python-all python3-stdeb python3-celery python3-flask python3-redis python3-sqlalchemy
+    - apt-get install -y  python3-stdeb python3-celery python3-flask python3-redis python3-sqlalchemy
     - rm -rf "./deb_dist"
     - python3 setup.py --command-packages=stdeb.command bdist_deb
   tags:
@@ -20,7 +20,7 @@ package:debian:
 package:archlinux:
   stage: package
   script:
-    - pacman -Sy sudo fakeroot systemd binutils python-setuptools python-celery python-flask python-redis python-sqlalchemy --noconfirm
+    - pacman -Sy sudo fakeroot binutils python-setuptools python-celery python-flask python-redis python-sqlalchemy base-devel --noconfirm
     - useradd -m -G users -s /bin/bash package
     - chown -R package:users archlinux
     - cd archlinux

@@ -1,28 +1,36 @@
 """Flask Celery Helper."""
 
-import os
 import tempfile
+from collections.abc import Callable
 from functools import partial, wraps
+from pathlib import Path
+from typing import TypeVar, cast, overload
 
-from celery import _state, Celery as CeleryClass
+from celery import Celery as CeleryClass
+from celery import Task, _state
+from flask import Flask
 
+from flask_celery.backends.base import LockBackend
 from flask_celery.lock_manager import LockManager, select_lock_backend
+from flask_celery.types import CelerySerializable
 
-__author__ = '@Salamek'
-__license__ = 'MIT'
-__version__ = '1.4.3'
+__author__ = "@Salamek"
+__license__ = "MIT"
+__version__ = "1.4.3"
+
+CT = TypeVar("CT")
 
 
 class _CeleryState:
     """Remember the configuration for the (celery, app) tuple. Modeled from SQLAlchemy."""
 
-    def __init__(self, celery, app):
+    def __init__(self, celery: CeleryClass, app: Flask) -> None:
         self.celery = celery
         self.app = app
 
 
 # noinspection PyProtectedMember
-class Celery(CeleryClass):
+class Celery(CeleryClass):  # type: ignore[misc]
     """Celery extension for Flask applications.
 
     Involves a hack to allow views and tests importing the celery instance from extensions.py to access the regular
@@ -39,66 +47,102 @@ class Celery(CeleryClass):
     initialized like normal.
     """
 
-    def __init__(self, app=None):
+    lock_backend: LockBackend|None
+
+    def __init__(self, app: Flask|None=None) -> None:
         """If app argument provided then initialize celery using application config values.
 
         If no app argument provided you should do initialization later with init_app method.
 
         :param app: Flask application instance.
         """
-        self.original_register_app = _state._register_app  # Backup Celery app registration function.
+        # Backup Celery app registration function.
+        self.original_register_app = _state._register_app  # noqa: SLF001
         self.lock_backend = None
-        _state._register_app = lambda _: None  # Upon Celery app registration attempt, do nothing.
+        # Upon Celery app registration attempt, do nothing.
+        _state._register_app = lambda _: None  # noqa: SLF001
         super().__init__()
         if app is not None:
             self.init_app(app)
 
-    def init_app(self, app):
+    def init_app(self, app: Flask) -> None:
         """Actual method to read celery settings from app configuration and initialize the celery instance.
 
         :param app: Flask application instance.
         """
-        _state._register_app = self.original_register_app  # Restore Celery app registration function.
-        if not hasattr(app, 'extensions'):
-            app.extensions = dict()
-        if 'celery' in app.extensions:
-            raise ValueError('Already registered extension CELERY.')
-        app.extensions['celery'] = _CeleryState(self, app)
+        # Restore Celery app registration function.
+        _state._register_app = self.original_register_app  # noqa: SLF001
+        if not hasattr(app, "extensions"):
+            app.extensions = {}
+        if "celery" in app.extensions:
+            msg = "Already registered extension CELERY."
+            raise ValueError(msg)
+        app.extensions["celery"] = _CeleryState(self, app)
 
         # Instantiate celery and read config.
-        super().__init__(app.import_name, broker=app.config['CELERY_BROKER_URL'])
+        super().__init__(
+            app.import_name,
+            broker=app.config["CELERY_BROKER_URL"],
+        )
 
         # Set filesystem lock backend as default when none is specified
-        if 'CELERY_TASK_LOCK_BACKEND' not in app.config:
-            temp_path = os.path.join(tempfile.gettempdir(), 'celery_lock')
-            app.config['CELERY_TASK_LOCK_BACKEND'] = 'file://{}'.format(temp_path)
+        if "CELERY_TASK_LOCK_BACKEND" not in app.config:
+            temp_path = Path(tempfile.gettempdir()).joinpath("celery_lock")
+            app.config["CELERY_TASK_LOCK_BACKEND"] = f"file://{temp_path}"
+
+        task_lock_backend_name = app.config.get("CELERY_TASK_LOCK_BACKEND")
+        if not task_lock_backend_name:
+            msg = "CELERY_TASK_LOCK_BACKEND was not provided"
+            raise ValueError(msg)
 
         # Instantiate lock backend
-        lock_backend_class = select_lock_backend(app.config.get('CELERY_TASK_LOCK_BACKEND'))
-        self.lock_backend = lock_backend_class(app.config.get('CELERY_TASK_LOCK_BACKEND'))
+        lock_backend_class = select_lock_backend(task_lock_backend_name)
+        self.lock_backend = lock_backend_class(task_lock_backend_name)
 
         # Set result backend default.
-        if 'CELERY_RESULT_BACKEND' in app.config:
-            self._preconf['CELERY_RESULT_BACKEND'] = app.config['CELERY_RESULT_BACKEND']
+        if "CELERY_RESULT_BACKEND" in app.config:
+            self._preconf["CELERY_RESULT_BACKEND"] = app.config["CELERY_RESULT_BACKEND"]
 
         celery_config = {}
         for key, value in app.config.items():
-            if key.startswith('CELERY'):
-                celery_config[key.replace('CELERY_', '').lower()] = value
+            if key.startswith("CELERY"):
+                celery_config[key.replace("CELERY_", "").lower()] = value
 
         self.conf.update(celery_config)
-        task_base = self.Task
+        #  @TODO
+        task_base = self.Task  # type: ignore[has-type]
 
         # Add Flask app context to celery instance.
-        class ContextTask(task_base):
-            def __call__(self, *_args, **_kwargs):
+        class ContextTask(task_base):  # type: ignore[valid-type,misc]
+            def __call__(self, *_args: CelerySerializable, **_kwargs: CelerySerializable) -> CelerySerializable:
                 with app.app_context():
-                    return task_base.__call__(self, *_args, **_kwargs)
-        setattr(ContextTask, 'abstract', True)
-        setattr(self, 'Task', ContextTask)
+                    return cast("CelerySerializable", task_base.__call__(self, *_args, **_kwargs))
+        ContextTask.abstract = True
+        self.Task = ContextTask
 
 
-def single_instance(func=None, lock_timeout=None, include_args=False):
+@overload
+def single_instance(
+        func: Callable[..., CT],
+        lock_timeout: int|None=None,
+        *,
+        include_args:bool=False,
+) -> Callable[..., CT]: ...
+
+@overload
+def single_instance(
+        func: None=None,
+        lock_timeout: int|None=None,
+        *,
+        include_args:bool=False,
+) -> Callable[[Callable[..., CT]], Callable[..., CT]]: ...
+
+def single_instance(
+        func: Callable[..., CT]|None=None,
+        lock_timeout: int|None=None,
+        *,
+        include_args:bool=False,
+) -> Callable[..., CT] | Callable[[Callable[..., CT]], Callable[..., CT]]:
     """Celery task decorator. Forces the task to have only one running instance at a time.
 
     Use with binded tasks (@celery.task(bind=True)).
@@ -123,13 +167,13 @@ def single_instance(func=None, lock_timeout=None, include_args=False):
         return partial(single_instance, lock_timeout=lock_timeout, include_args=include_args)
 
     @wraps(func)
-    def wrapped(celery_self, *args, **kwargs):  # noqa: D401
-        """Wrapped Celery task, for single_instance()."""
+    def wrapped(celery_self: Task, *args: CelerySerializable, **kwargs: CelerySerializable) -> CT:
+        """Wrapp Celery task, for single_instance()."""
         # Select the manager and get timeout.
         timeout = (
             lock_timeout or celery_self.soft_time_limit or celery_self.time_limit
-            or celery_self.app.conf.get('task_soft_time_limit')
-            or celery_self.app.conf.get('task_time_limit')
+            or celery_self.app.conf.get("task_soft_time_limit")
+            or celery_self.app.conf.get("task_time_limit")
             or (60 * 5)
         )
 
@@ -137,16 +181,17 @@ def single_instance(func=None, lock_timeout=None, include_args=False):
             celery_self.app.lock_backend,
             celery_self,
             timeout,
-            include_args,
             args,
-            kwargs
+            kwargs,
+            include_args=include_args,
         )
 
         # Lock and execute.
         with lock_manager:
             if celery_self.__bound__:
-                args = list(args)
-                args.insert(0, celery_self)
-            ret_value = func(*args, **kwargs)
-        return ret_value
+                modified_args = list(args)
+                modified_args.insert(0, celery_self)
+                return func(*modified_args, **kwargs)
+
+            return func(*args, **kwargs)
     return wrapped

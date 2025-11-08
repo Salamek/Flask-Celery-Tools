@@ -1,8 +1,7 @@
 """Filesystem backend."""
 
-import errno
-import os
 import time
+from pathlib import Path
 from urllib.parse import urlparse
 
 from flask_celery.backends.base import LockBackend
@@ -11,37 +10,29 @@ from flask_celery.backends.base import LockBackend
 class LockBackendFilesystem(LockBackend):
     """Lock backend implemented on local filesystem."""
 
-    LOCK_NAME = '{}.lock'
+    path: Path
+    LOCK_NAME = "{}.lock"
 
-    def __init__(self, task_lock_backend_uri: str):
-        """
-        Constructor.
+    def __init__(self, task_lock_backend_uri: str) -> None:
+        """LockBackendFilesystem constructor.
 
         :param task_lock_backend_uri: URI
         """
         super().__init__(task_lock_backend_uri)
         parsed_backend_uri = urlparse(task_lock_backend_uri)
-        self.path = parsed_backend_uri.path
-        try:
-            os.makedirs(self.path)
-        except OSError as exc:  # Python >2.5
-            if exc.errno == errno.EEXIST and os.path.isdir(self.path):
-                pass
-            else:
-                raise
+        self.path = Path(parsed_backend_uri.path)
+        self.path.mkdir(exist_ok=True)
 
-    def get_lock_path(self, task_identifier: str) -> str:
-        """
-        Return path to lock by task identifier.
+    def get_lock_path(self, task_identifier: str) -> Path:
+        """Return path to lock by task identifier.
 
         :param task_identifier: task identifier
         :return: str path to lock file
         """
-        return os.path.join(self.path, self.LOCK_NAME.format(task_identifier))
+        return self.path.joinpath(self.LOCK_NAME.format(task_identifier))
 
     def acquire(self, task_identifier: str, timeout: int) -> bool:
-        """
-        Acquire lock.
+        """Acquire lock.
 
         :param task_identifier: task identifier.
         :param timeout: lock timeout
@@ -50,36 +41,28 @@ class LockBackendFilesystem(LockBackend):
         lock_path = self.get_lock_path(task_identifier)
 
         try:
-            with open(lock_path, 'r') as file_read:
+            with lock_path.open("r") as file_read:
                 created = file_read.read().strip()
                 if not created:
-                    raise IOError
+                    return True
 
-                if int(time.time()) < (int(created) + timeout):
-                    return False
-                raise IOError
-        except IOError:
-            with open(lock_path, 'w') as file_write:
+                return not int(time.time()) < (int(created) + timeout)
+        except OSError:
+            with lock_path.open("w") as file_write:
                 file_write.write(str(int(time.time())))
             return True
 
     def release(self, task_identifier: str) -> None:
-        """
-        Release lock.
+        """Release lock.
 
         :param task_identifier: task identifier
         :return: None
         """
         lock_path = self.get_lock_path(task_identifier)
-        try:
-            os.remove(lock_path)
-        except OSError as exception:
-            if exception.errno != errno.ENOENT:
-                raise
+        lock_path.unlink(missing_ok=True)
 
     def exists(self, task_identifier: str, timeout: int) -> bool:
-        """
-        Check if lock exists and is valid.
+        """Check if lock exists and is valid.
 
         :param task_identifier: task identifier
         :param timeout: lock timeout
@@ -87,13 +70,11 @@ class LockBackendFilesystem(LockBackend):
         """
         lock_path = self.get_lock_path(task_identifier)
         try:
-            with open(lock_path, 'r') as file_read:
+            with lock_path.open("r") as file_read:
                 created = file_read.read().strip()
                 if not created:
-                    raise IOError
+                    return False
 
-                if int(time.time()) < (int(created) + timeout):
-                    return True
-                raise IOError
-        except IOError:
+                return int(time.time()) < (int(created) + timeout)
+        except OSError:
             return False

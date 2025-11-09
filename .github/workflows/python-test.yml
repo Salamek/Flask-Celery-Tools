@@ -1,0 +1,111 @@
+name: Tox tests
+
+on:
+  - push
+  - pull_request
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        env-config:
+          - { BROKER: "sqlite", RESULT: "sqlite", LOCK: "sqlite" }
+          - { BROKER: "mysql", RESULT: "mysql", LOCK: "mysql" }
+          - { BROKER: "rabbit", RESULT: "redis", LOCK: "redis" }
+          - { BROKER: "rabbit", RESULT: "redis", LOCK: "filesystem" }
+          - { BROKER: "postgres", RESULT: "postgres", LOCK: "postgres" }
+          - { BROKER: "redis", RESULT: "redis", LOCK: "redis" }
+          - { BROKER: "redis_sock", RESULT: "redis_sock", LOCK: "redis_sock" }
+        include:
+          - python-version: "pypy3.10"
+            env-config: { BROKER: "sqlite", RESULT: "sqlite", LOCK: "sqlite" }
+      fail-fast: false
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      rabbitmq:
+        image: rabbitmq:3-management-alpine
+        ports:
+          - 5672:5672
+          - 15672:15672
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: flask_celery_helper_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: flask_celery_helper_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      BROKER: ${{ matrix.env-config.BROKER }}
+      RESULT: ${{ matrix.env-config.RESULT }}
+      LOCK: ${{ matrix.env-config.LOCK }}
+
+    steps:
+    - uses: actions/checkout@v5
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install tox
+    - name: Setup MySQL
+      if: contains(matrix.env-config.BROKER, 'mysql') || contains(matrix.env-config.RESULT, 'mysql') || contains(matrix.env-config.LOCK, 'mysql')
+      run: |
+        mysql -h 127.0.0.1 -u root -proot -e 'CREATE DATABASE IF NOT EXISTS flask_celery_helper_test;'
+        mysql -h 127.0.0.1 -u root -proot -e "CREATE USER IF NOT EXISTS 'user'@'%' IDENTIFIED BY 'pass';"
+        mysql -h 127.0.0.1 -u root -proot -e 'GRANT ALL PRIVILEGES ON flask_celery_helper_test.* TO "user"@"%";'
+    - name: Setup PostgreSQL
+      if: contains(matrix.env-config.BROKER, 'postgres') || contains(matrix.env-config.RESULT, 'postgres') || contains(matrix.env-config.LOCK, 'postgres')
+      run: |
+        PGPASSWORD=postgres psql -h localhost -U postgres -c "CREATE USER user1 WITH PASSWORD 'pass';"
+        PGPASSWORD=postgres psql -h localhost -U postgres -c 'GRANT ALL PRIVILEGES ON DATABASE flask_celery_helper_test TO user1;'
+    - name: Setup Redis socket
+      if: contains(matrix.env-config.BROKER, 'redis_sock') || contains(matrix.env-config.RESULT, 'redis_sock') || contains(matrix.env-config.LOCK, 'redis_sock')
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y redis-server
+        echo -e "daemonize yes\nunixsocket /tmp/redis.sock\nunixsocketperm 777\nport 0" | redis-server -
+    - name: Run tests
+      run: tox -e ${TOX_ENV:-py}
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        fail_ci_if_error: false

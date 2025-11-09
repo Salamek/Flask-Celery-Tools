@@ -4,7 +4,7 @@ import tempfile
 from collections.abc import Callable
 from functools import partial, wraps
 from pathlib import Path
-from typing import TypeVar, cast, overload
+from typing import TypeVar, overload
 
 from celery import Celery as CeleryClass
 from celery import Task, _state
@@ -79,10 +79,16 @@ class Celery(CeleryClass):  # type: ignore[misc]
             raise ValueError(msg)
         app.extensions["celery"] = _CeleryState(self, app)
 
+        class FlaskTask(Task):  # type: ignore[misc]
+            def __call__(self, *args: object, **kwargs: object) -> object:
+                with app.app_context():
+                    return self.run(*args, **kwargs)
+
         # Instantiate celery and read config.
         super().__init__(
             app.import_name,
             broker=app.config["CELERY_BROKER_URL"],
+            task_cls = FlaskTask,
         )
 
         # Set filesystem lock backend as default when none is specified
@@ -109,16 +115,6 @@ class Celery(CeleryClass):  # type: ignore[misc]
                 celery_config[key.replace("CELERY_", "").lower()] = value
 
         self.conf.update(celery_config)
-        #  @TODO
-        task_base = self.Task  # type: ignore[has-type]
-
-        # Add Flask app context to celery instance.
-        class ContextTask(task_base):  # type: ignore[valid-type,misc]
-            def __call__(self, *_args: CelerySerializable, **_kwargs: CelerySerializable) -> CelerySerializable:
-                with app.app_context():
-                    return cast("CelerySerializable", task_base.__call__(self, *_args, **_kwargs))
-        ContextTask.abstract = True
-        self.Task = ContextTask
 
 
 @overload

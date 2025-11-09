@@ -1,5 +1,5 @@
 """Tasks for tests."""
-
+import flask
 from celery import Task, shared_task
 
 from flask_celery import single_instance
@@ -44,3 +44,9 @@ def add3(_cls: Task, x: int, y: int) -> int:
 def ping() -> str:
     """Return simple pong."""
     return "pong"
+
+
+@shared_task()
+def in_context() -> bool:
+    """Test if we are in flask app context."""
+    return flask.has_app_context()

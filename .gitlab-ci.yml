@@ -57,7 +57,7 @@ repoupdate:
     - python3 setup.py sdist
     - twine upload dist/*
   dependencies:
-    - package:archlinux
+    #- package:archlinux
     - package:debian
   tags:
     - docker

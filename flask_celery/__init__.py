@@ -16,7 +16,7 @@ from flask_celery.types import CelerySerializable
 
 __author__ = "@Salamek"
 __license__ = "MIT"
-__version__ = "1.4.3"
+__version__ = "1.5.0"
 
 CT = TypeVar("CT")
 

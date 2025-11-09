@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.11", "3.12", "3.13"]
         env-config:
           - { BROKER: "sqlite", RESULT: "sqlite", LOCK: "sqlite" }
           - { BROKER: "mysql", RESULT: "mysql", LOCK: "mysql" }
@@ -19,7 +19,7 @@ jobs:
           - { BROKER: "redis", RESULT: "redis", LOCK: "redis" }
           - { BROKER: "redis_sock", RESULT: "redis_sock", LOCK: "redis_sock" }
         include:
-          - python-version: "pypy3.10"
+          - python-version: "pypy3.11"
             env-config: { BROKER: "sqlite", RESULT: "sqlite", LOCK: "sqlite" }
       fail-fast: false
 

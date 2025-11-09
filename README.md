@@ -9,21 +9,15 @@ I need an init_app() method to initialize Celery after I instantiate it.
   
 This extension also comes with a ``single_instance`` method.  
   
-* Python PyPy, 3.6, 3.7 and 3.8 supported on Linux and OS X.
-* Python 3.6, 3.7 and 3.8 supported on Windows (both 32 and 64 bit versions of Python).
+* Python PyPy, 3.11, 3.12 and 3.13 supported.
   
-[![Build Status Windows ](https://img.shields.io/appveyor/ci/Salamek/Flask-Celery-Tools/master.svg?style=flat-square&label=AppVeyor%20CI)](https://ci.appveyor.com/project/Salamek/Flask-Celery-Tools) [![Build Status](https://img.shields.io/travis/Salamek/Flask-Celery-Tools/master.svg?style=flat-square&label=Travis%20CI)](https://travis-ci.com/Salamek/Flask-Celery-Tools ) [![Coverage Status](https://img.shields.io/codecov/c/github/Salamek/Flask-Celery-Tools/master.svg?style=flat-square&label=Codecov)](https://codecov.io/gh/Salamek/Flask-Celery-Tools) [![Latest Version ](https://img.shields.io/pypi/v/Flask-Celery-Tools.svg?style=flat-square&label=Latest)](https://pypi.python.org/pypi/Flask-Celery-Tools)
+[![Tests](https://github.com/Salamek/Flask-Celery-Tools/actions/workflows/python-test.yml/badge.svg)](https://github.com/Salamek/Flask-Celery-Tools/actions/workflows/python-test.yml)
  
 ## Attribution  
 
 Single instance decorator inspired by [Ryan Roemer](http://loose-bits.com/2010/10/distributed-task-locking-in-celery.html).  
   
-## Supported Libraries  
-  
-* [Flask](http://flask.pocoo.org/) 0.12 to 1.1.2
-* [Redis](http://redis.io/) 3.2.6  to 3.5.3
-* [Celery](http://www.celeryproject.org/) 3.1.11 to 4.4.7  
-  
+
 ## Quickstart  
 
 Install:  
@@ -47,7 +41,7 @@ app.config['CELERY_TASK_LOCK_BACKEND'] = 'redis://localhost'
 celery = Celery(app)  
 
 @celery.task()  
-def add_together(a, b):  
+def add_together(a: int, b: int) -> int:  
     return a + b  
 
 if __name__ == '__main__':  
@@ -74,7 +68,7 @@ celery = Celery()
 from flask import Flask
 from extensions import celery
 
-def create_app():
+def create_app() -> Flask:
     app = Flask(__name__)
     app.config['CELERY_IMPORTS'] = ('tasks.add_together', )
     app.config['CELERY_BROKER_URL'] = 'redis://localhost'
@@ -89,7 +83,7 @@ def create_app():
 from extensions import celery
 
 @celery.task()
-def add_together(a, b):
+def add_together(a: int, b: int) -> int:
     return a + b
 ```
 
@@ -120,7 +114,7 @@ Redis(app)
 
 @celery.task(bind=True)
 @single_instance
-def sleep_one_second(a, b):
+def sleep_one_second(a: int, b: int) -> int:
     time.sleep(1)
     return a + b
 
@@ -153,81 +147,3 @@ Redis backend is using redis for storing task locks, this backend is good for di
 #### Database (MariaDB, PostgreSQL, etc)
 
 Database backend is using database supported by SqlAlchemy to store task locks, this backend is good for distributed tasks. Except sqlite database that have same limitations as filesystem backend.
-
-
-## Changelog
-
-This project adheres to [Semantic Versioning](http://semver.org/).
-
-1.4.1 - 2020-11-10
-------------------
-    * Require flask>=1.0.2
-
-1.4.0 - 2020-11-04
-------------------
-    * Migrate to new (4.0>) celery config names, just UPPERCASE and prefixed with CELERY_ this is BC break see https://docs.celeryproject.org/en/stable/userguide/configuration.html for new config key names
-
-1.3.1 - 2020-11-03
-------------------
-    * Celery 5 support added
-
-1.2.9 - 2020-11-03
-------------------
-    * Bump celery to version 4.4.7
-
-1.2.7 - 2020-09-12
-------------------
-    * Set username for twine in CI release
-
-1.2.6 - 2020-09-10
-------------------
-    * Fixed archlinux build
-
-1.2.5 - 2020-09-10
-------------------
-    * Update dependencies
-    * Fixed unittests
-
-1.2.4 - 2018-11-03
-------------------
-    * Append celery_self if task is bound
-
-1.1.0 - 2014-12-28
-------------------
-
-Added
-    * Windows support.
-    * `single_instance` supported on SQLite/MySQL/PostgreSQL in addition to Redis.
-
-Changed
-    * `CELERY_RESULT_BACKEND` no longer mandatory.
-    * Breaking changes: `flask.ext.celery.CELERY_LOCK` moved to `flask.ext.celery._LockManagerRedis.CELERY_LOCK`.
-
-1.0.0 - 2014-11-01
-------------------
-
-Added
-    * Support for non-Redis backends.
-
-0.2.2 - 2014-08-11
-------------------
-
-Added
-    * Python 2.6 and 3.x support.
-
-0.2.1 - 2014-06-18
-------------------
-
-Fixed
-    * `single_instance` arguments with functools.
-
-0.2.0 - 2014-06-18
-------------------
-
-Added
-    * `include_args` argument to `single_instance`.
-
-0.1.0 - 2014-06-01
-------------------
-
-* Initial release.

@@ -17,21 +17,21 @@ package:debian:
       - deb_dist/*.deb
     expire_in: 1d
 
-package:archlinux:
-  stage: package
-  script:
-    - pacman -Sy sudo fakeroot binutils python-setuptools python-celery python-flask python-redis python-sqlalchemy base-devel --noconfirm
-    - useradd -m -G users -s /bin/bash package
-    - chown -R package:users archlinux
-    - cd archlinux
-    - sudo -H -u package makepkg -f
-  tags:
-    - archlinux
+#package:archlinux:
+#  stage: package
+#  script:
+#    - pacman -Sy sudo fakeroot binutils python-setuptools python-celery python-flask python-redis python-sqlalchemy base-devel --noconfirm
+#    - useradd -m -G users -s /bin/bash package
+#    - chown -R package:users archlinux
+#    - cd archlinux
+#    - sudo -H -u package makepkg -f
+#  tags:
+#    - archlinux
 
-  artifacts:
-    paths:
-      - archlinux/python-flask-celery-tools*
-    expire_in: 1d
+#  artifacts:
+#    paths:
+#      - archlinux/python-flask-celery-tools*
+#    expire_in: 1d
 
 
 repoupdate:
@@ -48,12 +48,12 @@ repoupdate:
     - mkdir -p ~/.ssh
     - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
   script:
-    - ssh www-data@repository 'rm -rf /var/www/repository.salamek.cz/www/arch/pub/any/python-flask-celery-tools*.pkg.tar.zst'
+    #- ssh www-data@repository 'rm -rf /var/www/repository.salamek.cz/www/arch/pub/any/python-flask-celery-tools*.pkg.tar.zst'
     - ssh www-data@repository 'rm -rf /var/www/repository.salamek.cz/cache/deb/pub/python3-flask-celery-tools*.deb'
-    - scp archlinux/python-flask-celery-tools*.pkg.tar.zst www-data@repository:/var/www/repository.salamek.cz/www/arch/pub/any
+    #- scp archlinux/python-flask-celery-tools*.pkg.tar.zst www-data@repository:/var/www/repository.salamek.cz/www/arch/pub/any
     - scp deb_dist/*.deb www-data@repository:/var/www/repository.salamek.cz/cache/deb/pub
     - ssh www-data@repository '/var/www/repository.salamek.cz/deb-pub-update.sh'
-    - ssh www-data@repository '/var/www/repository.salamek.cz/arch-pub-update.sh'
+    #- ssh www-data@repository '/var/www/repository.salamek.cz/arch-pub-update.sh'
     - python3 setup.py sdist
     - twine upload dist/*
   dependencies:

@@ -23,7 +23,7 @@ Single instance decorator inspired by [Ryan Roemer](http://loose-bits.com/2010/1
 Install:  
   
 ```bash  
-pip install Flask-Celery-Helper  
+pip install Flask-Celery-Tools  
   ```
 ## Examples    
   

@@ -95,6 +95,39 @@ app = create_app()
 app.run()
 ```
 
+### Custom Task Base Class
+
+You can provide your own base task class to `Celery()` or `init_app()`. It must extend `celery.Task` and will be used as the base for the internal `FlaskTask`, so Flask context injection is preserved while your custom behaviour (retry logic, logging, etc.) is inherited by all tasks.
+
+```python
+# example.py
+from celery import Task
+from flask import Flask
+from flask_celery import Celery
+
+class MyBaseTask(Task):
+    abstract = True
+
+    def on_failure(self, exc, task_id, args, kwargs, einfo):
+        print(f"Task {task_id} failed: {exc}")
+
+app = Flask('example')
+app.config['CELERY_BROKER_URL'] = 'redis://localhost'
+app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost'
+celery = Celery(app, task_cls=MyBaseTask)
+
+@celery.task()
+def add_together(a: int, b: int) -> int:
+    return a + b
+```
+
+The same parameter is available on `init_app()` for the factory pattern. A value passed to `init_app()` takes precedence over one passed to `Celery()`.
+
+```python
+celery = Celery(task_cls=FallbackTask)
+celery.init_app(app, task_cls=MyBaseTask)  # MyBaseTask wins
+```
+
 ### Single Instance Example
 
 ```python

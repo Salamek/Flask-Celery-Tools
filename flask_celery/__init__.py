@@ -48,27 +48,33 @@ class Celery(CeleryClass):  # type: ignore[misc]
     """
 
     lock_backend: LockBackend|None
+    _task_cls: type[Task]|None
 
-    def __init__(self, app: Flask|None=None) -> None:
+    def __init__(self, app: Flask|None=None, task_cls: type[Task]|None=None) -> None:
         """If app argument provided then initialize celery using application config values.
 
         If no app argument provided you should do initialization later with init_app method.
 
         :param app: Flask application instance.
+        :param task_cls: Optional base class for FlaskTask. Must extend celery.Task. Allows callers to inject
+            custom task behaviour (e.g. retry logic, logging) while keeping Flask context integration intact.
+            Can also be supplied later via init_app(); that value takes precedence over this one.
         """
         # Backup Celery app registration function.
         self.original_register_app = _state._register_app  # noqa: SLF001
         self.lock_backend = None
+        self._task_cls = task_cls
         # Upon Celery app registration attempt, do nothing.
         _state._register_app = lambda _: None  # noqa: SLF001
         super().__init__()
         if app is not None:
             self.init_app(app)
 
-    def init_app(self, app: Flask) -> None:
+    def init_app(self, app: Flask, task_cls: type[Task]|None=None) -> None:
         """Actual method to read celery settings from app configuration and initialize the celery instance.
 
         :param app: Flask application instance.
+        :param task_cls: Optional base class for FlaskTask. Overrides any task_cls supplied to __init__.
         """
         # Restore Celery app registration function.
         _state._register_app = self.original_register_app  # noqa: SLF001
@@ -79,7 +85,9 @@ class Celery(CeleryClass):  # type: ignore[misc]
             raise ValueError(msg)
         app.extensions["celery"] = _CeleryState(self, app)
 
-        class FlaskTask(Task):  # type: ignore[misc]
+        effective_task_cls: type[Task] = task_cls or self._task_cls or Task
+
+        class FlaskTask(effective_task_cls):  # type: ignore[misc]
             def __call__(self, *args: object, **kwargs: object) -> object:
                 with app.app_context():
                     return self.run(*args, **kwargs)

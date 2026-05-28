@@ -60,6 +60,6 @@ repoupdate:
     #- package:archlinux
     - package:debian
   tags:
-    - docker
+    - debian
   only:
     - tags

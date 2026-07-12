@@ -1,10 +1,12 @@
 """Tests for the task_cls parameter on Celery and Celery.init_app()."""
 
 import flask
+import pytest
 from celery import Task
 from flask import Flask
 
 from flask_celery import Celery
+from tests.tasks import CustomTask
 
 
 def _make_flask_app(name: str) -> Flask:
@@ -33,6 +35,22 @@ def test_custom_task_cls_via_constructor() -> None:
     assert issubclass(celery.Task, CustomTask)
 
 
+def test_custom_task_cls_via_constructor_import_string_colon() -> None:
+    """FlaskTask should inherit from task_cls passed as a module:Class import string."""
+    app = _make_flask_app("test_custom_task_cls_constructor_import_string_colon")
+    celery = Celery(app, task_cls="tests.tasks:CustomTask")
+    assert issubclass(celery.Task, CustomTask)
+    assert celery.Task.custom_class_attr == "hello"
+
+
+def test_custom_task_cls_via_constructor_import_string_dotted() -> None:
+    """FlaskTask should inherit from task_cls passed as a module.Class import string."""
+    app = _make_flask_app("test_custom_task_cls_constructor_import_string_dotted")
+    celery = Celery(app, task_cls="tests.tasks.CustomTask")
+    assert issubclass(celery.Task, CustomTask)
+    assert celery.Task.custom_class_attr == "hello"
+
+
 def test_custom_task_cls_via_init_app() -> None:
     """FlaskTask should inherit from task_cls passed to init_app()."""
 
@@ -43,6 +61,15 @@ def test_custom_task_cls_via_init_app() -> None:
     celery = Celery()
     celery.init_app(app, task_cls=CustomTask)
     assert issubclass(celery.Task, CustomTask)
+
+
+def test_custom_task_cls_via_init_app_import_string() -> None:
+    """FlaskTask should inherit from task_cls import string passed to init_app()."""
+    app = _make_flask_app("test_custom_task_cls_init_app_import_string")
+    celery = Celery()
+    celery.init_app(app, task_cls="tests.tasks:CustomTask")
+    assert issubclass(celery.Task, CustomTask)
+    assert celery.Task.custom_class_attr == "hello"
 
 
 def test_constructor_task_cls_used_when_init_app_has_none() -> None:
@@ -130,3 +157,17 @@ def test_multiple_apps_independent_task_cls() -> None:
     assert issubclass(celery2.Task, Task2)
     assert not issubclass(celery1.Task, Task2)
     assert not issubclass(celery2.Task, Task1)
+
+
+def test_invalid_task_cls_import_string_raises_value_error() -> None:
+    """Invalid task_cls import string format should fail clearly."""
+    app = _make_flask_app("test_invalid_task_cls_import_string")
+    with pytest.raises(ValueError, match="Invalid Celery task_cls import path"):
+        Celery(app, task_cls="CustomTask")
+
+
+def test_invalid_task_cls_object_raises_type_error() -> None:
+    """Resolved task_cls has to be a celery.Task subclass."""
+    app = _make_flask_app("test_invalid_task_cls_object")
+    with pytest.raises(TypeError, match=r"Celery task_cls must be a celery\.Task subclass"):
+        Celery(app, task_cls="tests.tasks:NOT_A_TASK")

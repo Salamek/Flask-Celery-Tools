@@ -1,10 +1,11 @@
 """Flask Celery Helper."""
 
+import importlib
 import tempfile
 from collections.abc import Callable
 from functools import partial, wraps
 from pathlib import Path
-from typing import TypeVar, overload
+from typing import TypeVar, cast, overload
 
 from celery import Celery as CeleryClass
 from celery import Task, _state
@@ -48,9 +49,9 @@ class Celery(CeleryClass):  # type: ignore[misc]
     """
 
     lock_backend: LockBackend|None
-    _task_cls: type[Task]|None
+    _task_cls: type[Task]|str|None
 
-    def __init__(self, app: Flask|None=None, task_cls: type[Task]|None=None) -> None:
+    def __init__(self, app: Flask|None=None, task_cls: type[Task]|str|None=None) -> None:
         """If app argument provided then initialize celery using application config values.
 
         If no app argument provided you should do initialization later with init_app method.
@@ -58,6 +59,7 @@ class Celery(CeleryClass):  # type: ignore[misc]
         :param app: Flask application instance.
         :param task_cls: Optional base class for FlaskTask. Must extend celery.Task. Allows callers to inject
             custom task behaviour (e.g. retry logic, logging) while keeping Flask context integration intact.
+            May be passed as an import string in ``module:Class`` or ``module.Class`` format.
             Can also be supplied later via init_app(); that value takes precedence over this one.
         """
         # Backup Celery app registration function.
@@ -70,7 +72,7 @@ class Celery(CeleryClass):  # type: ignore[misc]
         if app is not None:
             self.init_app(app)
 
-    def init_app(self, app: Flask, task_cls: type[Task]|None=None) -> None:
+    def init_app(self, app: Flask, task_cls: type[Task]|str|None=None) -> None:
         """Actual method to read celery settings from app configuration and initialize the celery instance.
 
         :param app: Flask application instance.
@@ -85,7 +87,7 @@ class Celery(CeleryClass):  # type: ignore[misc]
             raise ValueError(msg)
         app.extensions["celery"] = _CeleryState(self, app)
 
-        effective_task_cls: type[Task] = task_cls or self._task_cls or Task
+        effective_task_cls: type[Task] = self._resolve_task_cls(task_cls or self._task_cls)
 
         class FlaskTask(effective_task_cls):  # type: ignore[misc]
             def __call__(self, *args: object, **kwargs: object) -> object:
@@ -123,6 +125,23 @@ class Celery(CeleryClass):  # type: ignore[misc]
                 celery_config[key.replace("CELERY_", "").lower()] = value
 
         self.conf.update(celery_config)
+
+    @staticmethod
+    def _resolve_task_cls(task_cls: type[Task]|str|None) -> type[Task]:
+        if task_cls is None:
+            return cast("type[Task]", Task)
+        if isinstance(task_cls, str):
+            module_name, separator, class_name = task_cls.partition(":")
+            if not separator:
+                module_name, _, class_name = task_cls.rpartition(".")
+            if not module_name or not class_name:
+                msg = f"Invalid Celery task_cls import path: {task_cls}"
+                raise ValueError(msg)
+            task_cls = getattr(importlib.import_module(module_name), class_name)
+        if not isinstance(task_cls, type) or not issubclass(task_cls, Task):
+            msg = "Celery task_cls must be a celery.Task subclass"
+            raise TypeError(msg)
+        return task_cls
 
 
 @overload

@@ -4,6 +4,15 @@ from celery import Task, shared_task
 
 from flask_celery import single_instance
 
+NOT_A_TASK = object()
+
+
+class CustomTask(Task):  # type: ignore[misc]
+    """Reusable task class for import-string tests."""
+
+    abstract = True
+    custom_class_attr = "hello"
+
 
 @shared_task(bind=True)
 @single_instance
